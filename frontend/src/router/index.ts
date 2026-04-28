@@ -210,6 +210,18 @@ const routes: RouteRecordRaw[] = [
     }
   },
   {
+    path: '/models',
+    name: 'ModelSquare',
+    component: () => import('@/views/user/ModelSquareView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresAdmin: false,
+      title: 'Model Square',
+      titleKey: 'modelSquare.title',
+      descriptionKey: 'modelSquare.description'
+    }
+  },
+  {
     path: '/available-channels',
     name: 'UserAvailableChannels',
     component: () => import('@/views/user/AvailableChannelsView.vue'),
@@ -446,6 +458,18 @@ const routes: RouteRecordRaw[] = [
     }
   },
   {
+    path: '/admin/model-catalog',
+    name: 'AdminModelCatalog',
+    component: () => import('@/views/admin/ModelCatalogView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresAdmin: true,
+      title: 'Model Catalog',
+      titleKey: 'admin.modelCatalog.title',
+      descriptionKey: 'admin.modelCatalog.description'
+    }
+  },
+  {
     path: '/admin/announcements',
     name: 'AdminAnnouncements',
     component: () => import('@/views/admin/AnnouncementsView.vue'),
@@ -479,6 +503,17 @@ const routes: RouteRecordRaw[] = [
       title: 'Redeem Code Management',
       titleKey: 'admin.redeem.title',
       descriptionKey: 'admin.redeem.description'
+    }
+  },
+  {
+    path: '/admin/daily-checkins',
+    name: 'AdminDailyCheckins',
+    component: () => import('@/views/admin/DailyCheckinsView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresAdmin: true,
+      title: 'Daily Check-ins',
+      titleKey: 'admin.dailyCheckins.title'
     }
   },
   {
@@ -579,6 +614,10 @@ const router = createRouter({
     if (savedPosition) {
       return savedPosition
     }
+    if (history.state?.preserveSidebarScroll) {
+      return false
+    }
+
     // Scroll to top for new routes
     return { top: 0 }
   }

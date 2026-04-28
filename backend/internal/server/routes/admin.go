@@ -47,6 +47,9 @@ func RegisterAdminRoutes(
 		// 卡密管理
 		registerRedeemCodeRoutes(admin, h)
 
+		// 签到记录
+		admin.GET("/daily-checkins", h.DailyCheckin.AdminList)
+
 		// 优惠码管理
 		registerPromoCodeRoutes(admin, h)
 
@@ -395,6 +398,9 @@ func registerPromoCodeRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
 }
 
 func registerSettingsRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
+	admin.GET("/model-catalog", h.Admin.ModelCatalog.Get)
+	admin.PUT("/model-catalog", h.Admin.ModelCatalog.Update)
+
 	adminSettings := admin.Group("/settings")
 	{
 		adminSettings.GET("", h.Admin.Setting.GetSettings)

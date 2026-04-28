@@ -21,6 +21,7 @@ type AdminHandlers struct {
 	Redeem                 *admin.RedeemHandler
 	Promo                  *admin.PromoHandler
 	Setting                *admin.SettingHandler
+	ModelCatalog           *admin.ModelCatalogHandler
 	Ops                    *admin.OpsHandler
 	System                 *admin.SystemHandler
 	Subscription           *admin.SubscriptionHandler
@@ -55,6 +56,8 @@ type Handlers struct {
 	Payment          *PaymentHandler
 	PaymentWebhook   *PaymentWebhookHandler
 	AvailableChannel *AvailableChannelHandler
+	ModelCatalog     *ModelCatalogHandler
+	DailyCheckin     *DailyCheckinHandler
 }
 
 // BuildInfo contains build-time information

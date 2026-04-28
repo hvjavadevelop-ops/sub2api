@@ -24,6 +24,7 @@ func ProvideAdminHandlers(
 	redeemHandler *admin.RedeemHandler,
 	promoHandler *admin.PromoHandler,
 	settingHandler *admin.SettingHandler,
+	modelCatalogHandler *admin.ModelCatalogHandler,
 	opsHandler *admin.OpsHandler,
 	systemHandler *admin.SystemHandler,
 	subscriptionHandler *admin.SubscriptionHandler,
@@ -55,6 +56,7 @@ func ProvideAdminHandlers(
 		Redeem:                 redeemHandler,
 		Promo:                  promoHandler,
 		Setting:                settingHandler,
+		ModelCatalog:           modelCatalogHandler,
 		Ops:                    opsHandler,
 		System:                 systemHandler,
 		Subscription:           subscriptionHandler,
@@ -100,6 +102,8 @@ func ProvideHandlers(
 	paymentHandler *PaymentHandler,
 	paymentWebhookHandler *PaymentWebhookHandler,
 	availableChannelHandler *AvailableChannelHandler,
+	modelCatalogHandler *ModelCatalogHandler,
+	dailyCheckinHandler *DailyCheckinHandler,
 	_ *service.IdempotencyCoordinator,
 	_ *service.IdempotencyCleanupService,
 ) *Handlers {
@@ -120,6 +124,8 @@ func ProvideHandlers(
 		Payment:          paymentHandler,
 		PaymentWebhook:   paymentWebhookHandler,
 		AvailableChannel: availableChannelHandler,
+		ModelCatalog:     modelCatalogHandler,
+		DailyCheckin:     dailyCheckinHandler,
 	}
 }
 
@@ -141,6 +147,8 @@ var ProviderSet = wire.NewSet(
 	NewPaymentHandler,
 	NewPaymentWebhookHandler,
 	NewAvailableChannelHandler,
+	NewModelCatalogHandler,
+	NewDailyCheckinHandler,
 
 	// Admin handlers
 	admin.NewDashboardHandler,
@@ -158,6 +166,7 @@ var ProviderSet = wire.NewSet(
 	admin.NewRedeemHandler,
 	admin.NewPromoHandler,
 	admin.NewSettingHandler,
+	admin.NewModelCatalogHandler,
 	admin.NewOpsHandler,
 	ProvideSystemHandler,
 	admin.NewSubscriptionHandler,
