@@ -1,4 +1,4 @@
-# Sub2API
+# 只狼云 Sub2API 二开版
 
 <div align="center">
 
@@ -8,629 +8,275 @@
 [![Redis](https://img.shields.io/badge/Redis-7+-DC382D.svg)](https://redis.io/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg)](https://www.docker.com/)
 
-<a href="https://trendshift.io/repositories/21823" target="_blank"><img src="https://trendshift.io/api/badge/repositories/21823" alt="Wei-Shaw%2Fsub2api | Trendshift" width="250" height="55"/></a>
+**基于 Sub2API 的二次开发版本，面向 AI API 中转站运营场景增强**
 
-**AI API Gateway Platform for Subscription Quota Distribution**
-
-English | [中文](README_CN.md) | [日本語](README_JA.md)
 
 </div>
 
-> **Sub2API officially uses only the domains `sub2api.org` and `pincc.ai`. Other websites using the Sub2API name may be third-party deployments or services and are not affiliated with this project. Please verify and exercise your own judgment.**
+---
+
+## 在线体验
+
+体验地址：**[https://sekirocloud.site:8443/](https://sekirocloud.site:8443/)**
+
+> 这是只狼云线上站点。账号、额度、充值、模型和可用能力以站点实际配置为准。
 
 ---
 
-## Demo
+## 项目定位
 
-Try Sub2API online: **[https://demo.sub2api.org/](https://demo.sub2api.org/)**
+本仓库是基于开源 Sub2API 的二次开发版本，不是官方原版 README 所描述的纯通用发行版。
 
-Demo credentials (shared demo environment; **not** created automatically for self-hosted installs):
+二开目标：
 
-| Email | Password |
-|-------|----------|
-| admin@sub2api.org | admin123 |
-
-## Overview
-
-Sub2API is an AI API gateway platform designed to distribute and manage API quotas from AI product subscriptions. Users can access upstream AI services through platform-generated API Keys, while the platform handles authentication, billing, load balancing, and request forwarding.
-
-## Features
-
-- **Multi-Account Management** - Support multiple upstream account types (OAuth, API Key)
-- **API Key Distribution** - Generate and manage API Keys for users
-- **Precise Billing** - Token-level usage tracking and cost calculation
-- **Smart Scheduling** - Intelligent account selection with sticky sessions
-- **Concurrency Control** - Per-user and per-account concurrency limits
-- **Rate Limiting** - Configurable request and token rate limits
-- **Built-in Payment System** - Supports EasyPay, Alipay, WeChat Pay, and Stripe for user self-service top-up, no separate payment service needed ([Configuration Guide](docs/PAYMENT.md))
-- **Admin Dashboard** - Web interface for monitoring and management
-- **External System Integration** - Embed external systems (e.g. ticketing) via iframe to extend the admin dashboard
-
-## ❤️ Sponsors
-
-> [Want to appear here?](mailto:support@pincc.ai)
-
-<table>
-<tr>
-<td width="180" align="center" valign="middle"><a href="https://shop.pincc.ai/"><img src="assets/partners/logos/pincc-logo.png" alt="pincc" width="150"></a></td>
-<td valign="middle"><b><a href="https://shop.pincc.ai/">PinCC</a></b> is the official relay service built on Sub2API, offering stable access to Claude Code, Codex, Gemini and other popular models — ready to use, no deployment or maintenance required.</td>
-</tr>
-
-<tr>
-<td width="180"><a href="https://www.packyapi.com/register?aff=sub2api"><img src="assets/partners/logos/packycode.png" alt="PackyCode" width="150"></a></td>
-<td>Thanks to PackyCode for sponsoring this project! PackyCode is a reliable and efficient API relay service provider, offering relay services for Claude Code, Codex, Gemini, and more. PackyCode provides special discounts for our software users: register using <a href="https://www.packyapi.com/register?aff=sub2api">this link</a> and enter the "sub2api" promo code during first recharge to get 10% off.</td>
-</tr>
-
-<tr>
-<td width="180"><a href="https://poixe.com/i/sub2api"><img src="assets/partners/logos/poixe.png" alt="PoixeAi" width="150"></a></td>
-<td>Thanks to Poixe Ai for sponsoring this project! Poixe AI provides reliable LLM API services. You can leverage the platform's API endpoints to seamlessly build AI-powered products. Additionally, you can become a vendor by providing AI API resources to the platform and earn revenue. Register through the exclusive <a href="https://poixe.com/i/sub2api">sub2api</a> referral link and receive a bonus of $5 USD on your first top-up.</td>
-</tr>
-
-<tr>
-<td width="180"><a href="https://ctok.ai"><img src="assets/partners/logos/ctok.png" alt="CTok" width="150"></a></td>
-<td>Thanks to CTok.ai for sponsoring this project! CTok.ai is dedicated to building a one-stop AI programming tool service platform. We offer professional Claude Code packages and technical community services, with support for Google Gemini and OpenAI Codex. Through carefully designed plans and a professional tech community, we provide developers with reliable service guarantees and continuous technical support, making AI-assisted programming a true productivity tool. Click <a href="https://ctok.ai">here</a> to register!</td>
-</tr>
-
-<tr>
-<td width="180"><a href="https://code.silkapi.com/"><img src="assets/partners/logos/silkapi.png" alt="silkapi" width="150"></a></td>
-<td>Thanks to SilkAPI for sponsoring this project! <a href="https://code.silkapi.com/">SilkAPI</a> is a relay service built on Sub2API, specializing in providing high-speed and stable Codex API relay.</td>
-</tr>
-
-<tr>
-<td width="180"><a href="https://ylscode.com/"><img src="assets/partners/logos/ylscode.png" alt="ylscode" width="150"></a></td>
-<td>Thanks to YLS Code for sponsoring this project! <a href="https://ylscode.com/">YLS Code</a> is dedicated to building secure enterprise-grade Coding Agent productivity services, offering stable and fast Codex / Claude / Gemini subscription services along with pay-as-you-go API options for flexible choices. Register now for a limited-time 3-day Codex trial bonus!</td>
-</tr>
-
-<tr>
-<td width="180"><a href="https://www.aicodemirror.com/register?invitecode=KMVZQM"><img src="assets/partners/logos/AICodeMirror.jpg" alt="AICodeMirror" width="150"></a></td>
-<td>Thanks to AICodeMirror for sponsoring this project! AICodeMirror provides official high-stability relay services for Claude Code / Codex / Gemini CLI, with enterprise-grade concurrency, fast invoicing, and 24/7 dedicated technical support. Claude Code / Codex / Gemini official channels at 38% / 2% / 9% of original price, with extra discounts on top-ups! AICodeMirror offers special benefits for sub2api users: register via <a href="https://www.aicodemirror.com/register?invitecode=KMVZQM">this link</a> to enjoy 20% off your first top-up, and enterprise customers can get up to 25% off!</td>
-</tr>
-
-<tr>
-<td width="180"><a href="https://aigocode.com/invite/SUB2API"><img src="assets/partners/logos/aigocode.png" alt="AIGoCode" width="150"></a></td>
-<td>Thanks to AIGoCode for sponsoring this project! AIGoCode is an all-in-one platform that integrates Claude Code, Codex, and the latest Gemini models, providing you with stable, efficient, and highly cost-effective AI coding services. The platform offers flexible subscription plans, zero risk of account suspension, direct access with no VPN required, and lightning-fast responses. AIGoCode has prepared a special benefit for sub2api users: if you register via <a href="https://aigocode.com/invite/SUB2API">this link</a>, you'll receive an extra 10% bonus credit on your first top-up!</td>
-</tr>
-
-<tr>
-<td width="180"><a href="https://shop.bmoplus.com/?utm_source=github"><img src="assets/partners/logos/bmoplus.jpg" alt="bmoplus" width="150"></a></td>
-<td>Huge thanks to BmoPlus for sponsoring this project! BmoPlus is a highly reliable AI account provider built strictly for heavy AI users and developers. They offer rock-solid, ready-to-use accounts and official top-up services for ChatGPT Plus / ChatGPT Pro (Full Warranty) / Claude Pro / Super Grok / Gemini Pro. By registering and ordering through <a href="https://shop.bmoplus.com/?utm_source=github">BmoPlus - Premium AI Accounts & Top-ups</a>, users can unlock the mind-blowing rate of 10% of the official GPT subscription price (90% OFF)</td>
-</tr>
-
-<tr>
-<td width="180"><a href="https://bestproxy.com/?keyword=a2e8iuol"><img src="assets/partners/logos/bestproxy.png" alt="bestproxy" width="150"></a></td>
-<td>Thanks to Bestproxy for sponsoring this project! <a href="https://bestproxy.com/?keyword=a2e8iuol">Bestproxy</a> provides high-purity residential IPs with dedicated one-IP-per-account support. By combining real home networks with fingerprint isolation, it enables link environment isolation and reduces the probability of association-based risk control.</td>
-</tr>
-
-</table>
-
-## Ecosystem
-
-Community projects that extend or integrate with Sub2API:
-
-| Project | Description | Features |
-|---------|-------------|----------|
-| ~~[Sub2ApiPay](https://github.com/touwaeriol/sub2apipay)~~ | ~~Self-service payment system~~ | **Now Built-in** — Payment is now integrated into Sub2API, no separate deployment needed. See [Payment Configuration Guide](docs/PAYMENT.md) |
-| [sub2api-mobile](https://github.com/ckken/sub2api-mobile) | Mobile admin console | Cross-platform app (iOS/Android/Web) for user management, account management, monitoring dashboard, and multi-backend switching; built with Expo + React Native |
-
-## Tech Stack
-
-| Component | Technology |
-|-----------|------------|
-| Backend | Go 1.25.7, Gin, Ent |
-| Frontend | Vue 3.4+, Vite 5+, TailwindCSS |
-| Database | PostgreSQL 15+ |
-| Cache/Queue | Redis 7+ |
+- 更适合自建 AI API 中转站运营
+- 强化用户侧充值、兑换、签到、模型展示和一键配置体验
+- 强化后台账号管理、额度阈值、模型发现、使用记录和运营排障能力
+- 保留 Sub2API 原有网关、账号池、API Key、计费、调度、支付等核心能力
 
 ---
 
-## Nginx Reverse Proxy Note
+## 与官方版本的主要差异
 
-When using Nginx as a reverse proxy for Sub2API (or CRS) with Codex CLI, add the following to the `http` block in your Nginx configuration:
+| 能力 | 官方 Sub2API | 只狼云二开版 |
+|------|--------------|--------------|
+| API 网关与账号池 | 支持 | 保留并持续兼容 |
+| 用户 API Key 分发 | 支持 | 保留 |
+| Token 用量与成本统计 | 支持 | 保留，并优化使用记录展示 |
+| 支付/充值/兑换 | 支持 | 保留，并强化用户侧兑换体验 |
+| 每日签到 | 无独立运营功能 | 新增：每天签到随机发放 `$10-$29` 余额 |
+| 签到记录 | 无 | 新增：记录在 `user_daily_checkins`，展示到客户端“兑换”菜单的“最近活动” |
+| 签到数据语义 | - | 不写入 `redeem_codes`，避免污染兑换码数据 |
+| OpenAI 出站协议 | 默认逻辑为主 | 新增账号级出站协议开关：Responses / Chat Completions 可选 |
+| OpenAI 兼容上游 | 依赖默认转换 | 可按账号选择原生 `/v1/chat/completions` 出站，提升第三方上游兼容性 |
+| Base URL + Key 添加账号 | 基础配置 | 新增自动拉取上游模型；失败时展示错误且允许手动添加 |
+| Quota 阈值 | 基础额度逻辑 | 新增 5h / 7d 剩余额度百分比阈值，支持提前停调度 |
+| OpenAI OAuth 额度阈值 | 基础显示/保存 | 修复并支持阈值显示、保存和回显 |
+| 使用记录 | 基础表格 | 修复 Token / 成本图标对齐，管理员默认展示 User-Agent |
+| 侧边栏体验 | 基础导航 | 修复侧边栏滚动后跳顶问题 |
+| 一键配置助手 | 原始脚本入口 | 新增/保留只狼云一键配置助手：`sekiro-install.sh` / `sekiro-install.ps1` |
+| 移动端体验 | 基础适配 | 优化部分移动端留白、弹层和入口体验 |
+| 管理端签到菜单 | - | 不单独开后台菜单，避免后台冗余；用户活动直接在客户端展示 |
+
+---
+
+## 当前二开功能清单
+
+### 1. API 中转核心能力
+
+- 多上游账号管理
+- API Key 创建、禁用、额度和并发控制
+- 用户级、账号级调度
+- Token 级用量统计和成本计算
+- 支持 OpenAI / Anthropic / Gemini / Claude Code / Codex 等兼容场景
+- 支持分组、倍率、模型白名单等运营配置
+
+### 2. OpenAI 兼容增强
+
+针对不同 OpenAI-compatible 上游能力不一致的问题，二开版新增账号级出站协议控制：
+
+- 默认关闭：保持原有兼容逻辑，不影响历史账号
+- 开启后可选：
+  - `responses`：继续走 Responses API 逻辑
+  - `chat_completions`：用户请求 `/v1/chat/completions` 时，原生转发到上游 `/v1/chat/completions`
+
+适合处理部分上游只支持 Chat Completions、不支持 Responses API 的情况。
+
+### 3. Base URL + Key 模型发现
+
+添加账号时，如果使用 Base URL + API Key：
+
+- 自动请求上游模型列表
+- 自动带出可用模型
+- 获取失败时展示明确错误
+- 允许继续手动选择或添加模型
+
+### 4. 额度阈值与调度保护
+
+新增 Codex / OpenAI OAuth 相关额度阈值字段：
+
+- 5h 剩余额度百分比阈值
+- 7d 剩余额度百分比阈值
+- 空值或 0 表示不提前停，用到耗尽后等待重置
+- 配置后可在额度即将耗尽前停止调度，减少上游报错和用户侧失败
+
+### 5. 每日签到奖励
+
+用户侧顶部入口支持每日签到：
+
+- 签到按钮位于公告图标左侧
+- 签到前显示“签到”
+- 签到后显示复选标记图标
+- 每个用户每天只能签到一次
+- 每次随机发放 `$10-$29` 余额
+- 签到记录写入 `user_daily_checkins`
+- 签到记录展示在客户端“兑换”菜单的“最近活动”
+- 不写入 `redeem_codes`，兑换码表只保留真实兑换语义
+
+### 6. 用户侧兑换与最近活动
+
+客户端“兑换”页面除了兑换码兑换，还展示最近活动：
+
+- 兑换码兑换记录
+- 每日签到奖励记录
+- 活动金额使用 `$` 风格展示，例如 `+$20`
+
+### 7. 只狼云一键配置助手
+
+提供面向用户的一键配置入口，降低 Claude Code / Codex 等客户端接入成本：
+
+- Linux / macOS 脚本：`/sekiro-install.sh`
+- Windows PowerShell 脚本：`/sekiro-install.ps1`
+- 旧入口 `/sekiro-codex.sh`、`/sekiro-codex.ps1` 保留兼容
+
+### 8. 后台体验优化
+
+- 管理员使用记录默认展示 User-Agent
+- Token 明细和成本明细图标对齐
+- 侧边栏滚动位置保持，不再切换菜单后跳顶
+- 账号编辑页保留并回显二开配置项
+- 移动端部分页面留白和弹层体验优化
+
+---
+
+## 技术栈
+
+| 组件 | 技术 |
+|------|------|
+| 后端 | Go 1.25.7, Gin, Ent |
+| 前端 | Vue 3.4+, Vite 5+, TailwindCSS |
+| 数据库 | PostgreSQL 15+ |
+| 缓存/队列 | Redis 7+ |
+| 部署 | Docker / Docker Compose / 二进制 |
+
+---
+
+## 重要数据表说明
+
+| 表 | 用途 |
+|----|------|
+| `users` | 用户、余额、状态等 |
+| `api_keys` | 用户 API Key |
+| `accounts` | 上游账号配置 |
+| `redeem_codes` | 真实兑换码、兑换记录 |
+| `user_daily_checkins` | 每日签到奖励记录 |
+
+注意：签到奖励不应写入 `redeem_codes`。二开版已经将签到记录独立到 `user_daily_checkins`，并在用户侧最近活动中合并展示。
+
+---
+
+## Nginx 反向代理注意事项
+
+通过 Nginx 反向代理并配合 Codex CLI / Claude Code 等客户端使用时，建议在 Nginx 的 `http` 块中开启：
 
 ```nginx
 underscores_in_headers on;
 ```
 
-Nginx drops headers containing underscores by default (e.g. `session_id`), which breaks sticky session routing in multi-account setups.
+Nginx 默认可能丢弃包含下划线的请求头，例如 `session_id`，会影响多账号场景下的粘性会话。
 
 ---
 
-## Deployment
+## 部署说明
 
-### Method 1: Script Installation (Recommended)
+### Docker Compose
 
-One-click installation script that downloads pre-built binaries from GitHub Releases.
-
-#### Prerequisites
-
-- Linux server (amd64 or arm64)
-- PostgreSQL 15+ (installed and running)
-- Redis 7+ (installed and running)
-- Root privileges
-
-#### Installation Steps
+推荐生产环境使用 Docker Compose 部署 PostgreSQL、Redis 和 Sub2API 服务。
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/Wei-Shaw/sub2api/main/deploy/install.sh | sudo bash
-```
-
-The script will:
-1. Detect your system architecture
-2. Download the latest release
-3. Install binary to `/opt/sub2api`
-4. Create systemd service
-5. Configure system user and permissions
-
-#### Post-Installation
-
-```bash
-# 1. Start the service
-sudo systemctl start sub2api
-
-# 2. Enable auto-start on boot
-sudo systemctl enable sub2api
-
-# 3. Open Setup Wizard in browser
-# http://YOUR_SERVER_IP:8080
-```
-
-The Setup Wizard will guide you through:
-- Database configuration
-- Redis configuration
-- Admin account creation
-
-#### Upgrade
-
-You can upgrade directly from the **Admin Dashboard** by clicking the **Check for Updates** button in the top-left corner.
-
-The web interface will:
-- Check for new versions automatically
-- Download and apply updates with one click
-- Support rollback if needed
-
-#### Useful Commands
-
-```bash
-# Check status
-sudo systemctl status sub2api
-
-# View logs
-sudo journalctl -u sub2api -f
-
-# Restart service
-sudo systemctl restart sub2api
-
-# Uninstall
-curl -sSL https://raw.githubusercontent.com/Wei-Shaw/sub2api/main/deploy/install.sh | sudo bash -s -- uninstall -y
-```
-
----
-
-### Method 2: Docker Compose (Recommended)
-
-Deploy with Docker Compose, including PostgreSQL and Redis containers.
-
-#### Prerequisites
-
-- Docker 20.10+
-- Docker Compose v2+
-
-#### Quick Start (One-Click Deployment)
-
-Use the automated deployment script for easy setup:
-
-```bash
-# Create deployment directory
-mkdir -p sub2api-deploy && cd sub2api-deploy
-
-# Download and run deployment preparation script
-curl -sSL https://raw.githubusercontent.com/Wei-Shaw/sub2api/main/deploy/docker-deploy.sh | bash
-
-# Start services
-docker compose up -d
-
-# View logs
-docker compose logs -f sub2api
-```
-
-**What the script does:**
-- Downloads `docker-compose.local.yml` (saved as `docker-compose.yml`) and `.env.example`
-- Generates secure credentials (JWT_SECRET, TOTP_ENCRYPTION_KEY, POSTGRES_PASSWORD)
-- Creates `.env` file with auto-generated secrets
-- Creates data directories (uses local directories for easy backup/migration)
-- Displays generated credentials for your reference
-
-#### Manual Deployment
-
-If you prefer manual setup:
-
-```bash
-# 1. Clone the repository
+# 克隆仓库
 git clone https://github.com/Wei-Shaw/sub2api.git
 cd sub2api/deploy
 
-# 2. Copy environment configuration
+# 准备环境变量
 cp .env.example .env
 
-# 3. Edit configuration (generate secure passwords)
+# 编辑 .env，至少配置数据库密码、JWT_SECRET、TOTP_ENCRYPTION_KEY
 nano .env
-```
 
-**Required configuration in `.env`:**
-
-```bash
-# PostgreSQL password (REQUIRED)
-POSTGRES_PASSWORD=your_secure_password_here
-
-# JWT Secret (RECOMMENDED - keeps users logged in after restart)
-JWT_SECRET=your_jwt_secret_here
-
-# TOTP Encryption Key (RECOMMENDED - preserves 2FA after restart)
-TOTP_ENCRYPTION_KEY=your_totp_key_here
-
-# Optional: Admin account
-ADMIN_EMAIL=admin@example.com
-ADMIN_PASSWORD=your_admin_password
-
-# Optional: Custom port
-SERVER_PORT=8080
-```
-
-**Generate secure secrets:**
-```bash
-# Generate JWT_SECRET
-openssl rand -hex 32
-
-# Generate TOTP_ENCRYPTION_KEY
-openssl rand -hex 32
-
-# Generate POSTGRES_PASSWORD
-openssl rand -hex 32
-```
-
-```bash
-# 4. Create data directories (for local version)
-mkdir -p data postgres_data redis_data
-
-# 5. Start all services
-# Option A: Local directory version (recommended - easy migration)
-docker compose -f docker-compose.local.yml up -d
-
-# Option B: Named volumes version (simple setup)
+# 启动
 docker compose up -d
 
-# 6. Check status
-docker compose -f docker-compose.local.yml ps
+# 查看状态
+docker compose ps
 
-# 7. View logs
-docker compose -f docker-compose.local.yml logs -f sub2api
+# 查看日志
+docker compose logs -f sub2api
 ```
 
-#### Deployment Versions
-
-| Version | Data Storage | Migration | Best For |
-|---------|-------------|-----------|----------|
-| **docker-compose.local.yml** | Local directories | ✅ Easy (tar entire directory) | Production, frequent backups |
-| **docker-compose.yml** | Named volumes | ⚠️ Requires docker commands | Simple setup |
-
-**Recommendation:** Use `docker-compose.local.yml` (deployed by script) for easier data management.
-
-#### Access
-
-Open `http://YOUR_SERVER_IP:8080` in your browser.
-
-If admin password was auto-generated, find it in logs:
-```bash
-docker compose -f docker-compose.local.yml logs sub2api | grep "admin password"
-```
-
-#### Upgrade
+### 源码编译
 
 ```bash
-# Pull latest image and recreate container
-docker compose -f docker-compose.local.yml pull
-docker compose -f docker-compose.local.yml up -d
-```
-
-#### Easy Migration (Local Directory Version)
-
-When using `docker-compose.local.yml`, migrate to a new server easily:
-
-```bash
-# On source server
-docker compose -f docker-compose.local.yml down
-cd ..
-tar czf sub2api-complete.tar.gz sub2api-deploy/
-
-# Transfer to new server
-scp sub2api-complete.tar.gz user@new-server:/path/
-
-# On new server
-tar xzf sub2api-complete.tar.gz
-cd sub2api-deploy/
-docker compose -f docker-compose.local.yml up -d
-```
-
-#### Useful Commands
-
-```bash
-# Stop all services
-docker compose -f docker-compose.local.yml down
-
-# Restart
-docker compose -f docker-compose.local.yml restart
-
-# View all logs
-docker compose -f docker-compose.local.yml logs -f
-
-# Remove all data (caution!)
-docker compose -f docker-compose.local.yml down
-rm -rf data/ postgres_data/ redis_data/
-```
-
----
-
-### Method 3: Build from Source
-
-Build and run from source code for development or customization.
-
-#### Prerequisites
-
-- Go 1.21+
-- Node.js 18+
-- PostgreSQL 15+
-- Redis 7+
-
-#### Build Steps
-
-```bash
-# 1. Clone the repository
-git clone https://github.com/Wei-Shaw/sub2api.git
-cd sub2api
-
-# 2. Install pnpm (if not already installed)
-npm install -g pnpm
-
-# 3. Build frontend
+# 前端构建
 cd frontend
 pnpm install
-pnpm run build
-# Output will be in ../backend/internal/web/dist/
+pnpm build
 
-# 4. Build backend with embedded frontend
+# 后端编译，注意必须带 embed 标签
 cd ../backend
 go build -tags embed -o sub2api ./cmd/server
-
-# 5. Create configuration file
-cp ../deploy/config.example.yaml ./config.yaml
-
-# 6. Edit configuration
-nano config.yaml
 ```
 
-> **Note:** The `-tags embed` flag embeds the frontend into the binary. Without this flag, the binary will not serve the frontend UI.
-
-**Key configuration in `config.yaml`:**
-
-```yaml
-server:
-  host: "0.0.0.0"
-  port: 8080
-  mode: "release"
-
-database:
-  host: "localhost"
-  port: 5432
-  user: "postgres"
-  password: "your_password"
-  dbname: "sub2api"
-
-redis:
-  host: "localhost"
-  port: 6379
-  password: ""
-
-jwt:
-  secret: "change-this-to-a-secure-random-string"
-  expire_hour: 24
-
-default:
-  user_concurrency: 5
-  user_balance: 0
-  api_key_prefix: "sk-"
-  rate_multiplier: 1.0
-```
-
-### Sora Status (Temporarily Unavailable)
-
-> ⚠️ Sora-related features are temporarily unavailable due to technical issues in upstream integration and media delivery.
-> Please do not rely on Sora in production at this time.
-> Existing `gateway.sora_*` configuration keys are reserved and may not take effect until these issues are resolved.
-
-Additional security-related options are available in `config.yaml`:
-
-- `cors.allowed_origins` for CORS allowlist
-- `security.url_allowlist` for upstream/pricing/CRS host allowlists
-- `security.url_allowlist.enabled` to disable URL validation (use with caution)
-- `security.url_allowlist.allow_insecure_http` to allow HTTP URLs when validation is disabled
-- `security.url_allowlist.allow_private_hosts` to allow private/local IP addresses
-- `security.response_headers.enabled` to enable configurable response header filtering (disabled uses default allowlist)
-- `security.csp` to control Content-Security-Policy headers
-- `billing.circuit_breaker` to fail closed on billing errors
-- `server.trusted_proxies` to enable X-Forwarded-For parsing
-- `turnstile.required` to require Turnstile in release mode
-
-**⚠️ Security Warning: HTTP URL Configuration**
-
-When `security.url_allowlist.enabled=false`, the system performs minimal URL validation by default, **rejecting HTTP URLs** and only allowing HTTPS. To allow HTTP URLs (e.g., for development or internal testing), you must explicitly set:
-
-```yaml
-security:
-  url_allowlist:
-    enabled: false                # Disable allowlist checks
-    allow_insecure_http: true     # Allow HTTP URLs (⚠️ INSECURE)
-```
-
-**Or via environment variable:**
-
-```bash
-SECURITY_URL_ALLOWLIST_ENABLED=false
-SECURITY_URL_ALLOWLIST_ALLOW_INSECURE_HTTP=true
-```
-
-**Risks of allowing HTTP:**
-- API keys and data transmitted in **plaintext** (vulnerable to interception)
-- Susceptible to **man-in-the-middle (MITM) attacks**
-- **NOT suitable for production** environments
-
-**When to use HTTP:**
-- ✅ Development/testing with local servers (http://localhost)
-- ✅ Internal networks with trusted endpoints
-- ✅ Testing account connectivity before obtaining HTTPS
-- ❌ Production environments (use HTTPS only)
-
-**Example error without this setting:**
-```
-Invalid base URL: invalid url scheme: http
-```
-
-If you disable URL validation or response header filtering, harden your network layer:
-- Enforce an egress allowlist for upstream domains/IPs
-- Block private/loopback/link-local ranges
-- Enforce TLS-only outbound traffic
-- Strip sensitive upstream response headers at the proxy
-
-```bash
-# 6. Run the application
-./sub2api
-```
-
-#### Development Mode
-
-```bash
-# Backend (with hot reload)
-cd backend
-go run ./cmd/server
-
-# Frontend (with hot reload)
-cd frontend
-pnpm run dev
-```
-
-#### Code Generation
-
-When editing `backend/ent/schema`, regenerate Ent + Wire:
-
-```bash
-cd backend
-go generate ./ent
-go generate ./cmd/server
-```
+`-tags embed` 会把前端产物嵌入到后端二进制。不带该参数时，线上 `/`、`/login` 等页面可能无法访问。
 
 ---
 
-## Simple Mode
+## 配置建议
 
-Simple Mode is designed for individual developers or internal teams who want quick access without full SaaS features.
+### 安全配置
 
-- Enable: Set environment variable `RUN_MODE=simple`
-- Difference: Hides SaaS-related features and skips billing process
-- Security note: In production, you must also set `SIMPLE_MODE_CONFIRM=true` to allow startup
+- 生产环境必须使用 HTTPS
+- 为 `JWT_SECRET`、`TOTP_ENCRYPTION_KEY`、数据库密码生成高强度随机值
+- 不要将 API Key、上游账号 Cookie、OAuth Token 提交到仓库
+- 管理后台建议限制访问来源或接入额外认证/WAF
 
----
+### 运营配置
 
-## Antigravity Support
-
-Sub2API supports [Antigravity](https://antigravity.so/) accounts. After authorization, dedicated endpoints are available for Claude and Gemini models.
-
-### Dedicated Endpoints
-
-| Endpoint | Model |
-|----------|-------|
-| `/antigravity/v1/messages` | Claude models |
-| `/antigravity/v1beta/` | Gemini models |
-
-### Claude Code Configuration
-
-```bash
-export ANTHROPIC_BASE_URL="http://localhost:8080/antigravity"
-export ANTHROPIC_AUTH_TOKEN="sk-xxx"
-```
-
-### Hybrid Scheduling Mode
-
-Antigravity accounts support optional **hybrid scheduling**. When enabled, the general endpoints `/v1/messages` and `/v1beta/` will also route requests to Antigravity accounts.
-
-> **⚠️ Warning**: Anthropic Claude and Antigravity Claude **cannot be mixed within the same conversation context**. Use groups to isolate them properly.
-
-### Known Issues
-
-In Claude Code, Plan Mode cannot exit automatically. (Normally when using the native Claude API, after planning is complete, Claude Code will pop up options for users to approve or reject the plan.)
-
-**Workaround**: Press `Shift + Tab` to manually exit Plan Mode, then type your response to approve or reject the plan.
+- 根据账号类型配置模型白名单
+- 对高价值账号配置 5h / 7d 剩余额度阈值
+- 对只支持 Chat Completions 的上游账号开启原生 Chat Completions 出站
+- 定期查看使用记录、错误日志和账号健康状态
 
 ---
 
-## Project Structure
+## 项目结构
 
-```
+```text
 sub2api/
-├── backend/                  # Go backend service
-│   ├── cmd/server/           # Application entry
-│   ├── internal/             # Internal modules
-│   │   ├── config/           # Configuration
-│   │   ├── model/            # Data models
-│   │   ├── service/          # Business logic
-│   │   ├── handler/          # HTTP handlers
-│   │   └── gateway/          # API gateway core
-│   └── resources/            # Static resources
+├── backend/                  # Go 后端服务
+│   ├── cmd/server/           # 应用入口
+│   ├── internal/             # 内部模块
+│   │   ├── config/           # 配置管理
+│   │   ├── handler/          # HTTP 处理器
+│   │   ├── repository/       # 数据访问
+│   │   ├── service/          # 业务逻辑
+│   │   └── gateway/          # API 网关核心
+│   ├── migrations/           # 数据库迁移
+│   └── resources/            # 静态资源与模型价格等
 │
-├── frontend/                 # Vue 3 frontend
+├── frontend/                 # Vue 3 前端
 │   └── src/
-│       ├── api/              # API calls
-│       ├── stores/           # State management
-│       ├── views/            # Page components
-│       └── components/       # Reusable components
+│       ├── api/              # API 调用
+│       ├── stores/           # 状态管理
+│       ├── views/            # 页面组件
+│       └── components/       # 通用组件
 │
-└── deploy/                   # Deployment files
-    ├── docker-compose.yml    # Docker Compose configuration
-    ├── .env.example          # Environment variables for Docker Compose
-    ├── config.example.yaml   # Full config file for binary deployment
-    └── install.sh            # One-click installation script
+└── deploy/                   # 部署文件
+    ├── docker-compose.yml
+    ├── .env.example
+    └── config.example.yaml
 ```
 
-## Disclaimer
+---
 
-> **Please read carefully before using this project:**
->
-> :rotating_light: **Terms of Service Risk**: Using this project may violate Anthropic's Terms of Service. Please read Anthropic's user agreement carefully before use. All risks arising from the use of this project are borne solely by the user.
->
-> :book: **Disclaimer**: This project is for technical learning and research purposes only. The author assumes no responsibility for account suspension, service interruption, or any other losses caused by the use of this project.
+## 免责声明
+
+本项目为基于 Sub2API 的二次开发版本，仅供技术学习、研究与自建服务使用。使用者需要自行确认上游服务条款、账号安全、数据安全和合规风险。
+
+因使用本项目造成的账户封禁、服务中断、数据丢失、费用损失或其他问题，项目维护者不承担责任。
 
 ---
 
-## Star History
+## 许可证
 
-<a href="https://star-history.com/#Wei-Shaw/sub2api&Date">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=Wei-Shaw/sub2api&type=Date&theme=dark" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=Wei-Shaw/sub2api&type=Date" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=Wei-Shaw/sub2api&type=Date" />
- </picture>
-</a>
-
----
-
-## License
-
-This project is licensed under the [GNU Lesser General Public License v3.0](LICENSE) (or later).
-
-Copyright (c) 2026 Wesley Liddick
-
----
-
-<div align="center">
-
-**If you find this project useful, please give it a star!**
-
-</div>
+本项目延续上游项目许可证，基于 [GNU 宽通用公共许可证 v3.0](LICENSE)（或更高版本）授权。
