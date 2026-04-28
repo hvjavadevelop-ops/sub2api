@@ -303,8 +303,11 @@
                 >
                   {{ formatHistoryValue(item) }}
                 </p>
+                <p v-if="isDailyCheckin(item.type)" class="text-xs text-gray-400 dark:text-dark-500">
+                  每日签到
+                </p>
                 <p
-                  v-if="!isAdminAdjustment(item.type)"
+                  v-else-if="!isAdminAdjustment(item.type)"
                   class="font-mono text-xs text-gray-400 dark:text-dark-500"
                 >
                   {{ item.code.slice(0, 8) }}...
@@ -379,11 +382,15 @@ const contactInfo = ref('')
 
 // Helper functions for history display
 const isBalanceType = (type: string) => {
-  return type === 'balance' || type === 'admin_balance'
+  return type === 'balance' || type === 'admin_balance' || type === 'daily_checkin'
 }
 
 const isSubscriptionType = (type: string) => {
   return type === 'subscription'
+}
+
+const isDailyCheckin = (type: string) => {
+  return type === 'daily_checkin'
 }
 
 const isAdminAdjustment = (type: string) => {
@@ -391,7 +398,9 @@ const isAdminAdjustment = (type: string) => {
 }
 
 const getHistoryItemTitle = (item: RedeemHistoryItem) => {
-  if (item.type === 'balance') {
+  if (item.type === 'daily_checkin') {
+    return '每日签到奖励'
+  } else if (item.type === 'balance') {
     return t('redeem.balanceAddedRedeem')
   } else if (item.type === 'admin_balance') {
     return item.value >= 0 ? t('redeem.balanceAddedAdmin') : t('redeem.balanceDeductedAdmin')

@@ -47,9 +47,6 @@ func RegisterAdminRoutes(
 		// 卡密管理
 		registerRedeemCodeRoutes(admin, h)
 
-		// 签到记录
-		admin.GET("/daily-checkins", h.DailyCheckin.AdminList)
-
 		// 优惠码管理
 		registerPromoCodeRoutes(admin, h)
 

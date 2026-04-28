@@ -16,6 +16,8 @@ export interface RedeemHistoryItem {
   created_at: string
   // Notes from admin for admin_balance/admin_concurrency types
   notes?: string
+  // Virtual activity source, e.g. daily check-in rewards in user recent activity
+  source?: string
   // Subscription-specific fields
   group_id?: number
   validity_days?: number

@@ -10,6 +10,7 @@ import (
 type fakeDailyCheckinRepo struct {
 	balance      float64
 	records      map[string]*DailyCheckinRecord
+	recent       []DailyCheckinRecord
 	createdCount int
 }
 
@@ -49,8 +50,17 @@ func (r *fakeDailyCheckinRepo) CreateToday(ctx context.Context, userID int64, re
 	return &copy, nil
 }
 
-func (r *fakeDailyCheckinRepo) List(ctx context.Context, page, limit int) (*DailyCheckinListResult, error) {
-	return &DailyCheckinListResult{Records: []DailyCheckinRecord{}, Total: 0, Page: page, Limit: limit}, nil
+func (r *fakeDailyCheckinRepo) ListUserRecent(ctx context.Context, userID int64, limit int) ([]DailyCheckinRecord, error) {
+	items := make([]DailyCheckinRecord, 0)
+	for _, record := range r.recent {
+		if record.UserID == userID {
+			items = append(items, record)
+		}
+	}
+	if len(items) > limit {
+		items = items[:limit]
+	}
+	return items, nil
 }
 
 func TestDailyCheckinService_Checkin_GrantsRewardAndOnlyOncePerDay(t *testing.T) {
@@ -106,5 +116,30 @@ func TestDailyCheckinService_Status(t *testing.T) {
 	}
 	if !status.CheckedInToday || status.Today == nil {
 		t.Fatalf("expected checked in today with record")
+	}
+}
+
+func TestDailyCheckinService_ListUserRecent(t *testing.T) {
+	now := time.Date(2026, 4, 28, 10, 0, 0, 0, time.UTC)
+	repo := newFakeDailyCheckinRepo(0)
+	repo.recent = append(repo.recent,
+		DailyCheckinRecord{ID: 1, UserID: 1, Reward: 20, CreatedAt: now.Add(-time.Hour)},
+		DailyCheckinRecord{ID: 2, UserID: 2, Reward: 25, CreatedAt: now},
+		DailyCheckinRecord{ID: 3, UserID: 1, Reward: 29, CreatedAt: now},
+	)
+	svc := NewDailyCheckinService(repo, nil)
+
+	records, err := svc.ListUserRecent(context.Background(), 1, 25)
+
+	if err != nil {
+		t.Fatalf("ListUserRecent returned error: %v", err)
+	}
+	if len(records) != 2 {
+		t.Fatalf("expected 2 user records, got %d", len(records))
+	}
+	for _, record := range records {
+		if record.UserID != 1 {
+			t.Fatalf("expected only user 1 records, got user %d", record.UserID)
+		}
 	}
 }

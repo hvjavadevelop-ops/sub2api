@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"strconv"
 	"time"
 
 	"github.com/Wei-Shaw/sub2api/internal/pkg/response"
@@ -39,17 +38,6 @@ func (h *DailyCheckinHandler) Checkin(c *gin.Context) {
 		return
 	}
 	result, err := h.service.Checkin(c.Request.Context(), subject.UserID, time.Now())
-	if err != nil {
-		response.ErrorFrom(c, err)
-		return
-	}
-	response.Success(c, result)
-}
-
-func (h *DailyCheckinHandler) AdminList(c *gin.Context) {
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
-	result, err := h.service.List(c.Request.Context(), page, limit)
 	if err != nil {
 		response.ErrorFrom(c, err)
 		return

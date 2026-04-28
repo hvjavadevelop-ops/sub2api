@@ -90,7 +90,7 @@ func initializeApplication(buildInfo handler.BuildInfo) (*Application, error) {
 	dailyCheckinRepository := repository.NewDailyCheckinRepository(db)
 	dailyCheckinService := service.NewDailyCheckinService(dailyCheckinRepository, nil)
 	dailyCheckinHandler := handler.NewDailyCheckinHandler(dailyCheckinService)
-	redeemHandler := handler.NewRedeemHandler(redeemService)
+	redeemHandler := handler.NewRedeemHandler(redeemService, dailyCheckinService)
 	subscriptionHandler := handler.NewSubscriptionHandler(subscriptionService)
 	announcementRepository := repository.NewAnnouncementRepository(client)
 	announcementReadRepository := repository.NewAnnouncementReadRepository(client)

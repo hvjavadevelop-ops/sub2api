@@ -506,17 +506,6 @@ const routes: RouteRecordRaw[] = [
     }
   },
   {
-    path: '/admin/daily-checkins',
-    name: 'AdminDailyCheckins',
-    component: () => import('@/views/admin/DailyCheckinsView.vue'),
-    meta: {
-      requiresAuth: true,
-      requiresAdmin: true,
-      title: 'Daily Check-ins',
-      titleKey: 'admin.dailyCheckins.title'
-    }
-  },
-  {
     path: '/admin/promo-codes',
     name: 'AdminPromoCodes',
     component: () => import('@/views/admin/PromoCodesView.vue'),

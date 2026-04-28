@@ -31,13 +31,6 @@ type DailyCheckinRecord struct {
 	CreatedAt    time.Time `json:"created_at"`
 }
 
-type DailyCheckinListResult struct {
-	Records []DailyCheckinRecord `json:"records"`
-	Total   int                  `json:"total"`
-	Page    int                  `json:"page"`
-	Limit   int                  `json:"limit"`
-}
-
 type DailyCheckinResult struct {
 	CheckedInToday bool                `json:"checked_in_today"`
 	MinReward      float64             `json:"min_reward"`
@@ -50,7 +43,7 @@ type DailyCheckinResult struct {
 type DailyCheckinRepository interface {
 	GetToday(ctx context.Context, userID int64, now time.Time) (*DailyCheckinRecord, error)
 	CreateToday(ctx context.Context, userID int64, reward float64, now time.Time) (*DailyCheckinRecord, error)
-	List(ctx context.Context, page, limit int) (*DailyCheckinListResult, error)
+	ListUserRecent(ctx context.Context, userID int64, limit int) ([]DailyCheckinRecord, error)
 }
 
 type randomIntFunc func(max int) (int, error)
@@ -111,14 +104,11 @@ func (s *DailyCheckinService) Checkin(ctx context.Context, userID int64, now tim
 	}, nil
 }
 
-func (s *DailyCheckinService) List(ctx context.Context, page, limit int) (*DailyCheckinListResult, error) {
-	if page <= 0 {
-		page = 1
+func (s *DailyCheckinService) ListUserRecent(ctx context.Context, userID int64, limit int) ([]DailyCheckinRecord, error) {
+	if limit <= 0 || limit > 25 {
+		limit = 25
 	}
-	if limit <= 0 || limit > 100 {
-		limit = 20
-	}
-	return s.repo.List(ctx, page, limit)
+	return s.repo.ListUserRecent(ctx, userID, limit)
 }
 
 func secureRandomInt(max int) (int, error) {
