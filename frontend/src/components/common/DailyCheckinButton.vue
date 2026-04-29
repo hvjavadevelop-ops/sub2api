@@ -2,17 +2,13 @@
   <div>
     <button
       @click="handleCheckin"
-      :disabled="loading || checkedInToday"
-      class="relative flex h-9 items-center justify-center rounded-lg px-2 text-sm font-medium transition-all hover:scale-105 disabled:cursor-default disabled:hover:scale-100"
-      :class="checkedInToday
-        ? 'w-9 bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400'
-        : 'min-w-[3.25rem] text-gray-600 hover:bg-amber-50 hover:text-amber-600 dark:text-gray-400 dark:hover:bg-amber-900/20 dark:hover:text-amber-400'"
+      :disabled="loading"
+      class="relative flex h-9 w-9 items-center justify-center rounded-lg bg-transparent text-sm font-medium transition-all hover:scale-105 hover:bg-transparent dark:hover:bg-transparent disabled:cursor-wait disabled:hover:scale-100"
       :title="buttonTitle"
       aria-label="每日签到"
     >
-      <span v-if="loading" class="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></span>
-      <span v-else-if="!checkedInToday">签到</span>
-      <img v-else :src="checkmarkIcon" alt="已签到" class="h-5 w-5" />
+      <span v-if="loading" class="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent text-amber-600"></span>
+      <img v-else :src="calendarIcon" alt="签到" class="h-6 w-6" />
       <span
         v-if="!checkedInToday && !loading"
         class="absolute right-1 top-1 flex h-1.5 w-1.5"
@@ -28,7 +24,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { dailyCheckinAPI } from '@/api'
 import { useAppStore, useAuthStore } from '@/stores'
-import checkmarkIcon from '@/assets/icons/checkmark.svg'
+import calendarIcon from '@/assets/icons/checkin-calendar.svg'
 
 const authStore = useAuthStore()
 const appStore = useAppStore()
@@ -40,7 +36,7 @@ const maxReward = ref(29)
 
 const buttonTitle = computed(() => {
   if (loading.value) return '签到中...'
-  if (checkedInToday.value) return '今日已签到'
+  if (checkedInToday.value) return '今日已签到，明天再来'
   return `每日签到，随机领取 $${minReward.value}-$${maxReward.value} 余额`
 })
 
@@ -56,11 +52,17 @@ async function loadStatus() {
 }
 
 async function handleCheckin() {
-  if (loading.value || checkedInToday.value) return
+  if (loading.value) return
+  if (checkedInToday.value) {
+    appStore.showInfo('今天已经签到过了，明天再来')
+    return
+  }
   loading.value = true
   try {
     const result = await dailyCheckinAPI.checkin()
     checkedInToday.value = true
+    minReward.value = result.min_reward
+    maxReward.value = result.max_reward
     if (typeof result.balance_after === 'number' && authStore.user) {
       authStore.user.balance = result.balance_after
       localStorage.setItem('auth_user', JSON.stringify(authStore.user))

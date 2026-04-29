@@ -66,7 +66,7 @@ func (r *fakeDailyCheckinRepo) ListUserRecent(ctx context.Context, userID int64,
 func TestDailyCheckinService_Checkin_GrantsRewardAndOnlyOncePerDay(t *testing.T) {
 	now := time.Date(2026, 4, 28, 10, 0, 0, 0, time.Local)
 	repo := newFakeDailyCheckinRepo(100)
-	svc := NewDailyCheckinService(repo, func(max int) (int, error) { return 7, nil })
+	svc := NewDailyCheckinService(repo, nil, func(max int) (int, error) { return 7, nil })
 
 	result, err := svc.Checkin(context.Background(), 42, now)
 	if err != nil {
@@ -94,7 +94,7 @@ func TestDailyCheckinService_Checkin_GrantsRewardAndOnlyOncePerDay(t *testing.T)
 func TestDailyCheckinService_Status(t *testing.T) {
 	now := time.Date(2026, 4, 28, 10, 0, 0, 0, time.Local)
 	repo := newFakeDailyCheckinRepo(0)
-	svc := NewDailyCheckinService(repo, func(max int) (int, error) { return 0, nil })
+	svc := NewDailyCheckinService(repo, nil, func(max int) (int, error) { return 0, nil })
 
 	status, err := svc.Status(context.Background(), 1, now)
 	if err != nil {
@@ -127,7 +127,7 @@ func TestDailyCheckinService_ListUserRecent(t *testing.T) {
 		DailyCheckinRecord{ID: 2, UserID: 2, Reward: 25, CreatedAt: now},
 		DailyCheckinRecord{ID: 3, UserID: 1, Reward: 29, CreatedAt: now},
 	)
-	svc := NewDailyCheckinService(repo, nil)
+	svc := NewDailyCheckinService(repo, nil, nil)
 
 	records, err := svc.ListUserRecent(context.Background(), 1, 25)
 
@@ -142,4 +142,59 @@ func TestDailyCheckinService_ListUserRecent(t *testing.T) {
 			t.Fatalf("expected only user 1 records, got user %d", record.UserID)
 		}
 	}
+}
+
+type fakeDailyCheckinSettingsProvider struct {
+	min int
+	max int
+}
+
+func (p fakeDailyCheckinSettingsProvider) GetDailyCheckinRewardRange(ctx context.Context) (int, int) {
+	return p.min, p.max
+}
+
+func TestDailyCheckinService_Checkin_UsesConfiguredRewardRange(t *testing.T) {
+	now := time.Date(2026, 4, 28, 10, 0, 0, 0, time.Local)
+	repo := newFakeDailyCheckinRepo(100)
+	svc := NewDailyCheckinService(repo, fakeDailyCheckinSettingsProvider{min: 30, max: 35}, func(max int) (int, error) {
+		if max != 6 {
+			t.Fatalf("random max = %d, want 6", max)
+		}
+		return 5, nil
+	})
+
+	result, err := svc.Checkin(context.Background(), 42, now)
+	if err != nil {
+		t.Fatalf("checkin failed: %v", err)
+	}
+	if result.MinReward != 30 || result.MaxReward != 35 {
+		t.Fatalf("reward range = %v-%v, want 30-35", result.MinReward, result.MaxReward)
+	}
+	if result.Reward != 35 {
+		t.Fatalf("reward = %v, want 35", result.Reward)
+	}
+	if result.BalanceAfter != 135 {
+		t.Fatalf("balance after = %v, want 135", result.BalanceAfter)
+	}
+}
+
+func TestDailyCheckinService_Status_FallsBackInvalidConfiguredRewardRange(t *testing.T) {
+	now := time.Date(2026, 4, 28, 10, 0, 0, 0, time.Local)
+	repo := newFakeDailyCheckinRepo(0)
+	svc := NewDailyCheckinService(repo, fakeDailyCheckinSettingsProvider{min: 50, max: 10}, nil)
+
+	status, err := svc.Status(context.Background(), 1, now)
+	if err != nil {
+		t.Fatalf("status failed: %v", err)
+	}
+	if status.MinReward != DailyCheckinDefaultMinReward || status.MaxReward != DailyCheckinDefaultMaxReward {
+		t.Fatalf("reward range = %v-%v, want defaults %d-%d", status.MinReward, status.MaxReward, DailyCheckinDefaultMinReward, DailyCheckinDefaultMaxReward)
+	}
+}
+func (r *fakeDailyCheckinRepo) ListAdmin(ctx context.Context, params DailyCheckinListParams) ([]DailyCheckinRecord, int, error) {
+	records := make([]DailyCheckinRecord, 0, len(r.records))
+	for _, record := range r.records {
+		records = append(records, *record)
+	}
+	return records, len(records), nil
 }

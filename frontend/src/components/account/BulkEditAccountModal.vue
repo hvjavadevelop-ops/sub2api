@@ -1061,12 +1061,8 @@ const statusOptions = computed(() => [
   { value: 'active', label: t('common.active') },
   { value: 'inactive', label: t('common.inactive') }
 ])
-const isOpenAIModelRestrictionDisabled = computed(
-  () =>
-    allOpenAIPassthroughCapable.value &&
-    enableOpenAIPassthrough.value &&
-    openaiPassthroughEnabled.value
-)
+// OpenAI 透传不再禁用模型白名单/映射配置：管理员需要在透传开启时继续维护对外模型名。
+const isOpenAIModelRestrictionDisabled = computed(() => false)
 
 const openAIWSModeOptions = computed(() => [
   { value: OPENAI_WS_MODE_OFF, label: t('admin.accounts.openai.wsModeOff') },

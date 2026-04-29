@@ -908,6 +908,8 @@ export default {
     detailLoadError: '加载渠道详情失败',
     detailTitle: '渠道详情',
     closeDetail: '关闭',
+    systemUptimeTitle: '系统运行时长',
+    systemUptime: '系统已正常运行 {days}天 {minutes}分钟{seconds}秒',
     windowTab: {
       '7d': '7 天',
       '15d': '15 天',
@@ -939,6 +941,11 @@ export default {
       title: '暂无可显示的渠道',
       description: '管理员尚未配置可监控的渠道。'
     }
+  },
+
+  modelSquare: {
+    title: '模型广场',
+    description: '查看当前可用模型和 OpenAI 兼容调用示例',
   },
 
   // Available Channels (user-facing)
@@ -1295,6 +1302,11 @@ export default {
 
   // Admin
   admin: {
+    modelCatalog: {
+      title: '模型配置',
+      description: '按厂商分类管理用户侧模型广场展示的模型'
+    },
+
     // Dashboard
     dashboard: {
       title: '管理控制台',
@@ -5125,6 +5137,11 @@ export default {
         defaultConcurrencyHint: '新用户的最大并发请求数',
         defaultUserRpmLimit: '默认用户 RPM 限制',
         defaultUserRpmLimitHint: '新用户默认每分钟最大请求数，0 = 不限制；仅作用于新用户创建时初始化',
+        dailyCheckinRewardMin: '签到奖励最小值',
+        dailyCheckinRewardMinHint: '用户每日签到随机奖励下限，单位 $，默认 10',
+        dailyCheckinRewardMax: '签到奖励最大值',
+        dailyCheckinRewardMaxHint: '用户每日签到随机奖励上限，单位 $，默认 29；最小值不能大于最大值',
+        dailyCheckinRewardInvalid: '每日签到奖励范围不合法，最小值不能大于最大值',
         defaultSubscriptions: '默认订阅列表',
         defaultSubscriptionsHint: '新用户创建或注册时自动分配这些订阅',
         addDefaultSubscription: '添加默认订阅',
@@ -5287,6 +5304,11 @@ export default {
         visibility: '可见角色',
         visibilityUser: '普通用户',
         visibilityAdmin: '管理员',
+        openMode: '打开方式',
+        openModeNewTab: '新窗口打开（推荐）',
+        openModeIframe: '站内嵌入 iframe',
+        openModeDesc: '很多外部网站禁止被嵌入，遇到“拒绝连接/内容被屏蔽”请选择新窗口打开。',
+        openModeHint: '默认新窗口打开外部链接，避免 codexcn.com、ldxp.cn 等网站因 X-Frame-Options/CSP 禁止 iframe 嵌入而显示“拒绝连接/内容被屏蔽”。',
         add: '添加菜单项',
         remove: '删除',
         moveUp: '上移',
@@ -5994,6 +6016,9 @@ export default {
   customPage: {
     title: '自定义页面',
     openInNewTab: '新窗口打开',
+    iframeNotice: '如果页面显示拒绝连接/内容被屏蔽，说明目标网站禁止 iframe 嵌入，请改用新窗口打开。',
+    newTabTitle: '此链接已设置为新窗口打开',
+    newTabDesc: '为避免目标网站禁止嵌入导致空白或屏蔽，请点击下面按钮在新窗口访问。',
     notFoundTitle: '页面不存在',
     notFoundDesc: '该自定义页面不存在或已被删除。',
     notConfiguredTitle: '页面链接未配置',

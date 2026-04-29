@@ -24,7 +24,6 @@ func ProvideAdminHandlers(
 	redeemHandler *admin.RedeemHandler,
 	promoHandler *admin.PromoHandler,
 	settingHandler *admin.SettingHandler,
-	modelCatalogHandler *admin.ModelCatalogHandler,
 	opsHandler *admin.OpsHandler,
 	systemHandler *admin.SystemHandler,
 	subscriptionHandler *admin.SubscriptionHandler,
@@ -39,6 +38,8 @@ func ProvideAdminHandlers(
 	channelMonitorTemplateHandler *admin.ChannelMonitorRequestTemplateHandler,
 	paymentHandler *admin.PaymentHandler,
 	affiliateHandler *admin.AffiliateHandler,
+	modelCatalogHandler *admin.ModelCatalogHandler,
+	dailyCheckinAdminHandler *admin.DailyCheckinHandler,
 ) *AdminHandlers {
 	return &AdminHandlers{
 		Dashboard:              dashboardHandler,
@@ -56,7 +57,6 @@ func ProvideAdminHandlers(
 		Redeem:                 redeemHandler,
 		Promo:                  promoHandler,
 		Setting:                settingHandler,
-		ModelCatalog:           modelCatalogHandler,
 		Ops:                    opsHandler,
 		System:                 systemHandler,
 		Subscription:           subscriptionHandler,
@@ -71,6 +71,8 @@ func ProvideAdminHandlers(
 		ChannelMonitorTemplate: channelMonitorTemplateHandler,
 		Payment:                paymentHandler,
 		Affiliate:              affiliateHandler,
+		ModelCatalog:           modelCatalogHandler,
+		DailyCheckin:           dailyCheckinAdminHandler,
 	}
 }
 
@@ -166,7 +168,6 @@ var ProviderSet = wire.NewSet(
 	admin.NewRedeemHandler,
 	admin.NewPromoHandler,
 	admin.NewSettingHandler,
-	admin.NewModelCatalogHandler,
 	admin.NewOpsHandler,
 	ProvideSystemHandler,
 	admin.NewSubscriptionHandler,
@@ -181,6 +182,8 @@ var ProviderSet = wire.NewSet(
 	admin.NewChannelMonitorRequestTemplateHandler,
 	admin.NewPaymentHandler,
 	admin.NewAffiliateHandler,
+	admin.NewModelCatalogHandler,
+	admin.NewDailyCheckinHandler,
 
 	// AdminHandlers and Handlers constructors
 	ProvideAdminHandlers,

@@ -1,8 +1,6 @@
 package handler
 
 import (
-	"sort"
-
 	"github.com/Wei-Shaw/sub2api/internal/handler/dto"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/response"
 	middleware2 "github.com/Wei-Shaw/sub2api/internal/server/middleware"
@@ -13,15 +11,13 @@ import (
 
 // RedeemHandler handles redeem code-related requests
 type RedeemHandler struct {
-	redeemService       *service.RedeemService
-	dailyCheckinService *service.DailyCheckinService
+	redeemService *service.RedeemService
 }
 
 // NewRedeemHandler creates a new RedeemHandler
-func NewRedeemHandler(redeemService *service.RedeemService, dailyCheckinService *service.DailyCheckinService) *RedeemHandler {
+func NewRedeemHandler(redeemService *service.RedeemService) *RedeemHandler {
 	return &RedeemHandler{
-		redeemService:       redeemService,
-		dailyCheckinService: dailyCheckinService,
+		redeemService: redeemService,
 	}
 }
 
@@ -80,32 +76,10 @@ func (h *RedeemHandler) GetHistory(c *gin.Context) {
 		response.ErrorFrom(c, err)
 		return
 	}
-	checkins, err := h.dailyCheckinService.ListUserRecent(c.Request.Context(), subject.UserID, limit)
-	if err != nil {
-		response.ErrorFrom(c, err)
-		return
-	}
 
-	out := make([]dto.RedeemCode, 0, len(codes)+len(checkins))
+	out := make([]dto.RedeemCode, 0, len(codes))
 	for i := range codes {
 		out = append(out, *dto.RedeemCodeFromService(&codes[i]))
-	}
-	for i := range checkins {
-		out = append(out, dto.DailyCheckinRedeemHistoryFromService(&checkins[i]))
-	}
-	sort.SliceStable(out, func(i, j int) bool {
-		left := out[i].UsedAt
-		right := out[j].UsedAt
-		if left == nil {
-			left = &out[i].CreatedAt
-		}
-		if right == nil {
-			right = &out[j].CreatedAt
-		}
-		return left.After(*right)
-	})
-	if len(out) > limit {
-		out = out[:limit]
 	}
 	response.Success(c, out)
 }

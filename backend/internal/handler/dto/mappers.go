@@ -506,20 +506,6 @@ func RedeemCodeFromService(rc *service.RedeemCode) *RedeemCode {
 	return &out
 }
 
-func DailyCheckinRedeemHistoryFromService(record *service.DailyCheckinRecord) RedeemCode {
-	usedAt := record.CreatedAt
-	return RedeemCode{
-		ID:        -record.ID,
-		Code:      "daily-checkin",
-		Type:      "daily_checkin",
-		Value:     record.Reward,
-		Status:    service.StatusUsed,
-		UsedBy:    &record.UserID,
-		UsedAt:    &usedAt,
-		CreatedAt: record.CreatedAt,
-	}
-}
-
 // RedeemCodeFromServiceAdmin converts a service RedeemCode to DTO for admin users.
 // It includes notes - user-facing endpoints must not use this.
 func RedeemCodeFromServiceAdmin(rc *service.RedeemCode) *AdminRedeemCode {

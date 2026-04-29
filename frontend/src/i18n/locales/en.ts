@@ -904,6 +904,8 @@ export default {
     detailLoadError: 'Failed to load channel detail',
     detailTitle: 'Channel Detail',
     closeDetail: 'Close',
+    systemUptimeTitle: 'System uptime',
+    systemUptime: 'System has been running normally for {days}d, {minutes}m {seconds}s',
     windowTab: {
       '7d': '7 days',
       '15d': '15 days',
@@ -935,6 +937,11 @@ export default {
       title: 'No channels available',
       description: 'No monitored channels have been configured yet.'
     }
+  },
+
+  modelSquare: {
+    title: 'Model Square',
+    description: 'View currently available models and OpenAI-compatible examples',
   },
 
   // Available Channels (user-facing)
@@ -1291,6 +1298,10 @@ export default {
 
   // Admin
   admin: {
+    modelCatalog: {
+      title: 'Model Config',
+      description: 'Manage user-facing models by provider category'
+    },
     // Dashboard
     dashboard: {
       title: 'Admin Dashboard',
@@ -2717,6 +2728,10 @@ export default {
       quotaLimitHint: 'Set daily/weekly/total spending limits (USD). Anthropic API key accounts can also configure client affinity. Changing limits won\'t reset usage.',
       quotaLimitToggle: 'Enable Quota Limit',
       quotaLimitToggleHint: 'When enabled, account will be paused when usage reaches the set limit',
+      codex5hStopRemainingPercent: 'Stop when 5h quota remaining is below',
+      codex7dStopRemainingPercent: 'Stop when weekly quota remaining is below',
+      stopRemainingPercentPlaceholder: 'e.g. 10',
+      codexStopRemainingPercentHint: 'Compatible by default: empty or 0 disables this limit. Configure 5h and weekly thresholds separately; 10 means stop when usage reaches 90% for that window.',
       quotaDailyLimit: 'Daily Limit',
       quotaDailyLimitHint: 'Automatically resets every 24 hours from first usage.',
       quotaWeeklyLimit: 'Weekly Limit',
@@ -2829,7 +2844,12 @@ export default {
         apiKeyHint: 'Your OpenAI API Key',
         oauthPassthrough: 'Auto passthrough (auth only)',
         oauthPassthroughDesc:
-          'When enabled, this OpenAI account uses automatic passthrough: the gateway forwards request/response as-is and only swaps auth, while keeping billing/concurrency/audit and necessary safety filtering.',
+          'When enabled, this OpenAI account automatically passes requests and responses through while only replacing authentication, preserving billing/concurrency/audit and required safety filtering. Turn off anytime to roll back if compatibility issues appear.',
+        customOutboundProtocol: 'Enable custom outbound protocol',
+        customOutboundProtocolDesc: 'Disabled by default to keep Sub2API’s existing Responses conversion and avoid affecting existing accounts. Enable to choose the upstream API.',
+        outboundProtocol: 'Outbound protocol',
+        outboundProtocolResponses: 'Responses API (Sub2API default)',
+        outboundProtocolChatCompletions: 'Chat Completions API (/v1/chat/completions)',
         responsesWebsocketsV2: 'Responses WebSocket v2',
         responsesWebsocketsV2Desc:
           'Disabled by default. Enable to allow responses_websockets_v2 capability (still gated by global and account-type switches).',
@@ -2891,6 +2911,14 @@ export default {
         'Map request models to actual models. Left is the requested model, right is the actual model sent to API.',
       selectedModels: 'Selected {count} model(s)',
       supportsAllModels: '(supports all models)',
+      modelDiscoveryTitle: 'Auto fetch upstream models',
+      modelDiscoveryHint: 'Use the current Base URL and API Key to request /v1/models. Successful results are added to the model whitelist; errors are shown here, and you can still add models manually.',
+      modelDiscoveryButton: 'Fetch models',
+      modelDiscoveryLoading: 'Fetching...',
+      modelDiscoveryError: 'Failed to fetch models',
+      modelDiscoveryFound: 'Fetched {count} model(s), added to whitelist',
+      modelDiscoverySuccess: 'Fetched {count} model(s)',
+      modelDiscoveryAddToMapping: 'Also add as one-to-one mappings',
       requestModel: 'Request model',
       actualModel: 'Actual model',
       addMapping: 'Add Mapping',
@@ -5126,6 +5154,11 @@ export default {
         visibility: 'Visible To',
         visibilityUser: 'Regular Users',
         visibilityAdmin: 'Administrators',
+        openMode: 'Open Mode',
+        openModeNewTab: 'Open in new tab (recommended)',
+        openModeIframe: 'Embed in site iframe',
+        openModeDesc: 'Many external sites block iframe embedding. If you see refused connection or blocked content, choose new tab.',
+        openModeHint: 'External links open in a new tab by default to avoid iframe blocking by X-Frame-Options/CSP on sites such as codexcn.com and ldxp.cn.',
         add: 'Add Menu Item',
         remove: 'Remove',
         moveUp: 'Move Up',
@@ -5535,38 +5568,6 @@ export default {
         presetOpusOnlyDesc: 'Pass for Opus, filter others',
         commonPatterns: 'Common patterns'
       },
-      openaiFastPolicy: {
-        title: 'OpenAI Fast/Flex Policy',
-        description: 'Intercept, filter, or pass OpenAI fast(priority) / flex requests based on the request body service_tier field. Applies to the OpenAI gateway only.',
-        empty: 'No rules configured. Click the button below to add one.',
-        ruleHeader: 'Rule #{index}',
-        removeRule: 'Remove rule',
-        addRule: 'Add rule',
-        saveHint: 'Saved together with system settings (click the global Save button at the bottom of the page).',
-        serviceTier: 'service_tier match',
-        tierAll: 'All tiers',
-        tierPriority: 'priority (fast)',
-        tierFlex: 'flex',
-        action: 'Action',
-        actionPass: 'Pass (keep service_tier)',
-        actionFilter: 'Filter (remove service_tier)',
-        actionBlock: 'Block (reject request)',
-        scope: 'Scope',
-        scopeAll: 'All accounts',
-        scopeOAuth: 'OAuth only',
-        scopeAPIKey: 'API Key only',
-        scopeBedrock: 'Bedrock only',
-        errorMessage: 'Error message',
-        errorMessagePlaceholder: 'Custom error message when blocked',
-        errorMessageHint: 'Leave empty for the default message.',
-        modelWhitelist: 'Model whitelist',
-        modelWhitelistHint: 'Leave empty to apply to all models. Supports exact match and wildcard prefix (e.g., gpt-5.5*).',
-        modelPatternPlaceholder: 'e.g., gpt-5.5 or gpt-5.5*',
-        addModelPattern: 'Add model pattern',
-        fallbackAction: 'Fallback action',
-        fallbackActionHint: 'Action for models not matching the whitelist.',
-        fallbackErrorMessagePlaceholder: 'Custom error message when non-whitelisted models are blocked'
-      },
       wechatConnect: {
         title: 'WeChat Connect',
         description: 'Third-party login configuration for WeChat Open Platform or Official Account / Mini Program.',
@@ -5835,6 +5836,9 @@ export default {
   customPage: {
     title: 'Custom Page',
     openInNewTab: 'Open in new tab',
+    iframeNotice: 'If this page shows refused connection or blocked content, the target site blocks iframe embedding. Please use new tab instead.',
+    newTabTitle: 'This link is configured to open in a new tab',
+    newTabDesc: 'To avoid blank or blocked embedded pages, click the button below to visit it in a new window.',
     notFoundTitle: 'Page not found',
     notFoundDesc: 'This custom page does not exist or has been removed.',
     notConfiguredTitle: 'Page URL not configured',

@@ -1,282 +1,196 @@
-# 只狼云 Sub2API 二开版
+# SekiroCloud Sub2API Custom Edition
 
 <div align="center">
 
-[![Go](https://img.shields.io/badge/Go-1.25.7-00ADD8.svg)](https://golang.org/)
+[![Go](https://img.shields.io/badge/Go-1.26.2-00ADD8.svg)](https://golang.org/)
 [![Vue](https://img.shields.io/badge/Vue-3.4+-4FC08D.svg)](https://vuejs.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-336791.svg)](https://www.postgresql.org/)
 [![Redis](https://img.shields.io/badge/Redis-7+-DC382D.svg)](https://redis.io/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg)](https://www.docker.com/)
 
-**基于 Sub2API 的二次开发版本，面向 AI API 中转站运营场景增强**
+**Customized Sub2API build used by 云栖小铺 / SekiroCloud**
 
+English | [中文](README_CN.md)
 
 </div>
 
 ---
 
-## 在线体验
+## Live Site
 
-体验地址：**[https://sekirocloud.site:8443/](https://sekirocloud.site:8443/)**
+Experience URL: **https://sekirocloud.site:8443/**
 
-> 这是只狼云线上站点。账号、额度、充值、模型和可用能力以站点实际配置为准。
+This repository tracks the customized SekiroCloud build based on upstream Sub2API v0.1.120. It is used for AI API relay operations, redeem-code/balance distribution, model showcase, channel monitoring, and admin-side operations.
 
----
+> This is not the official Sub2API repository. For the upstream project, see Wei-Shaw/sub2api. This fork documents the production customizations used by SekiroCloud.
 
-## 项目定位
+## Positioning
 
-本仓库是基于开源 Sub2API 的二次开发版本，不是官方原版 README 所描述的纯通用发行版。
+Sub2API is an AI API gateway platform that converts upstream AI accounts, subscription quotas, API Keys, or OAuth capabilities into OpenAI/Anthropic-compatible APIs. It also provides user, balance, concurrency, group, channel, usage, and payment management.
 
-二开目标：
+This custom edition focuses on operational features:
 
-- 更适合自建 AI API 中转站运营
-- 强化用户侧充值、兑换、签到、模型展示和一键配置体验
-- 强化后台账号管理、额度阈值、模型发现、使用记录和运营排障能力
-- 保留 Sub2API 原有网关、账号池、API Key、计费、调度、支付等核心能力
+- A clearer model showcase and one-click setup entry for customers
+- Daily check-in rewards with an admin management page
+- Limited-time grants that start counting only on first API usage
+- Compatibility and UI polish for Codex / Claude Code / Cursor workflows
+- Safer settings initialization that does not overwrite site branding during upgrades/restarts
 
----
+## Current Version
 
-## 与官方版本的主要差异
+- Upstream baseline: Sub2API v0.1.120
+- Live site: `https://sekirocloud.site:8443/`
+- Production image reference: `sub2api-mobilefix:0.1.120-production-merged-custom-404fix-versionfix2`
 
-| 能力 | 官方 Sub2API | 只狼云二开版 |
-|------|--------------|--------------|
-| API 网关与账号池 | 支持 | 保留并持续兼容 |
-| 用户 API Key 分发 | 支持 | 保留 |
-| Token 用量与成本统计 | 支持 | 保留，并优化使用记录展示 |
-| 支付/充值/兑换 | 支持 | 保留，并强化用户侧兑换体验 |
-| 每日签到 | 无独立运营功能 | 新增：每天签到随机发放 `$10-$29` 余额 |
-| 签到记录 | 无 | 新增：记录在 `user_daily_checkins`，展示到客户端“兑换”菜单的“最近活动” |
-| 签到数据语义 | - | 不写入 `redeem_codes`，避免污染兑换码数据 |
-| OpenAI 出站协议 | 默认逻辑为主 | 新增账号级出站协议开关：Responses / Chat Completions 可选 |
-| OpenAI 兼容上游 | 依赖默认转换 | 可按账号选择原生 `/v1/chat/completions` 出站，提升第三方上游兼容性 |
-| Base URL + Key 添加账号 | 基础配置 | 新增自动拉取上游模型；失败时展示错误且允许手动添加 |
-| Quota 阈值 | 基础额度逻辑 | 新增 5h / 7d 剩余额度百分比阈值，支持提前停调度 |
-| OpenAI OAuth 额度阈值 | 基础显示/保存 | 修复并支持阈值显示、保存和回显 |
-| 使用记录 | 基础表格 | 修复 Token / 成本图标对齐，管理员默认展示 User-Agent |
-| 侧边栏体验 | 基础导航 | 修复侧边栏滚动后跳顶问题 |
-| 一键配置助手 | 原始脚本入口 | 新增/保留只狼云一键配置助手：`sekiro-install.sh` / `sekiro-install.ps1` |
-| 移动端体验 | 基础适配 | 优化部分移动端留白、弹层和入口体验 |
-| 管理端签到菜单 | - | 不单独开后台菜单，避免后台冗余；用户活动直接在客户端展示 |
+## Custom Features
 
----
+### Daily Check-in
 
-## 当前二开功能清单
+- Calendar icon entry in the top bar, replacing the original language-switcher position.
+- The button is not grayed out after check-in; clicking again shows “今天已经签到过了，明天再来”.
+- Reward range is configurable through admin settings; display uses `$` style.
+- Rewards are credited directly to user balance and recorded in a dedicated check-in table.
+- Rewards do not create fake `redeem_codes`, keeping redeem-code semantics clean.
 
-### 1. API 中转核心能力
+### Admin Check-in Management
 
-- 多上游账号管理
-- API Key 创建、禁用、额度和并发控制
-- 用户级、账号级调度
-- Token 级用量统计和成本计算
-- 支持 OpenAI / Anthropic / Gemini / Claude Code / Codex 等兼容场景
-- 支持分组、倍率、模型白名单等运营配置
+- Dedicated admin page: `/admin/daily-checkins`.
+- Shows check-in record ID, user information, reward amount, and check-in time.
+- Supports search by email, username, or numeric user ID.
+- Includes inline reward configuration for `daily_checkin_reward_min` and `daily_checkin_reward_max`.
 
-### 2. OpenAI 兼容增强
+### Limited-Time Grants
 
-针对不同 OpenAI-compatible 上游能力不一致的问题，二开版新增账号级出站协议控制：
+For trials, campaigns, or manual compensation, admins can issue temporary balance or concurrency grants.
 
-- 默认关闭：保持原有兼容逻辑，不影响历史账号
-- 开启后可选：
-  - `responses`：继续走 Responses API 逻辑
-  - `chat_completions`：用户请求 `/v1/chat/completions` 时，原生转发到上游 `/v1/chat/completions`
+- A visible “限时权益” button is available on each user row in `/admin/users`.
+- New grants start as `pending`.
+- The first real API-Key request activates pending grants and starts the timer.
+- Expired grants are deducted automatically and recorded in history.
+- Supported statuses: `pending`, `active`, `expired`, `cancelled`.
+- Backed by a dedicated `timed_user_grants` table.
+- Activation happens in API-Key authentication and refreshes auth/user cache so the current request can see the new quota.
 
-适合处理部分上游只支持 Chat Completions、不支持 Responses API 的情况。
+### Model Square
 
-### 3. Base URL + Key 模型发现
+- User-facing model showcase with model examples.
+- Admin-side model catalog grouped by provider.
+- Codex download entry links only to the official page: `https://developers.openai.com/codex/app`.
+- Local mirrored installers are not hosted; stale `/downloads/codex/...` paths return real 404.
+- Contact QR code is displayed in a standalone card without cropping.
 
-添加账号时，如果使用 Base URL + API Key：
+### Custom Menu Open Mode
 
-- 自动请求上游模型列表
-- 自动带出可用模型
-- 获取失败时展示明确错误
-- 允许继续手动选择或添加模型
+- Custom menu items support `open_mode`.
+- Default is `new_tab`, avoiding iframe failures caused by `X-Frame-Options` or CSP `frame-ancestors`.
+- Explicit `iframe` mode remains available, with a new-window fallback.
 
-### 4. 额度阈值与调度保护
+### OpenAI / Codex / Responses Compatibility
 
-新增 Codex / OpenAI OAuth 相关额度阈值字段：
+- OpenAI Responses and Chat Completions compatibility improvements.
+- Per-account OpenAI outbound protocol switch.
+- Base URL model discovery and model-list sync.
+- Codex official setup/download entry retained.
+- UI/API flow adjusted for Claude Code / Codex / Cursor-style clients.
 
-- 5h 剩余额度百分比阈值
-- 7d 剩余额度百分比阈值
-- 空值或 0 表示不提前停，用到耗尽后等待重置
-- 配置后可在额度即将耗尽前停止调度，减少上游报错和用户侧失败
+### Channel Status
 
-### 5. 每日签到奖励
+- User route: `/monitor`.
+- Top status area displays the operational uptime text, e.g. `系统已正常运行 156天 X分钟X秒`.
+- Keeps channel availability, latency, and history views.
 
-用户侧顶部入口支持每日签到：
+### Operational Polish
 
-- 签到按钮位于公告图标左侧
-- 签到前显示“签到”
-- 签到后显示复选标记图标
-- 每个用户每天只能签到一次
-- 每次随机发放 `$10-$29` 余额
-- 签到记录写入 `user_daily_checkins`
-- 签到记录展示在客户端“兑换”菜单的“最近活动”
-- 不写入 `redeem_codes`，兑换码表只保留真实兑换语义
+- If an admin updates their own balance, the top-header balance refreshes immediately.
+- Usage-table alignment, User-Agent defaults, quota threshold details, and sidebar scrolling are polished.
+- Settings initialization inserts missing keys only and does not overwrite existing branding, logo, custom menus, or check-in configuration.
 
-### 6. 用户侧兑换与最近活动
+### One-click Setup Scripts
 
-客户端“兑换”页面除了兑换码兑换，还展示最近活动：
+Depending on deployment configuration, the live service can expose helper scripts such as:
 
-- 兑换码兑换记录
-- 每日签到奖励记录
-- 活动金额使用 `$` 风格展示，例如 `+$20`
+- `sekiro-install.sh`
+- `sekiro-install.ps1`
+- `sekiro-codex.sh`
+- `sekiro-codex.ps1`
 
-### 7. 只狼云一键配置助手
+## Differences from Upstream
 
-提供面向用户的一键配置入口，降低 Claude Code / Codex 等客户端接入成本：
+| Area | Upstream Sub2API | SekiroCloud Custom Edition |
+| --- | --- | --- |
+| Daily check-in | Not an operational loop | User check-in, balance reward, admin records/config |
+| Check-in records | N/A | Dedicated table; no redeem-code pollution |
+| Limited-time grants | N/A | Admin-issued, first API request activates, auto-deduct on expiry |
+| Model Square | Basic/upstream behavior | Provider catalog, Codex official link, contact card |
+| Custom menu | iframe-oriented | `new_tab` / `iframe` open mode |
+| Codex installers | Upstream/default behavior | Official page only; stale local installer paths return 404 |
+| Settings initialization | Default insertion may overwrite | Insert missing keys only, preserve production branding |
+| Channel status | Basic monitor | Adds operational uptime copy |
+| Admin UX | Upstream admin panel | Check-in management, grants, balance refresh, visible entries |
 
-- Linux / macOS 脚本：`/sekiro-install.sh`
-- Windows PowerShell 脚本：`/sekiro-install.ps1`
-- 旧入口 `/sekiro-codex.sh`、`/sekiro-codex.ps1` 保留兼容
+## Stack
 
-### 8. 后台体验优化
+- Backend: Go 1.26.2, Gin, Ent, PostgreSQL, Redis
+- Frontend: Vue 3, TypeScript, Vite, TailwindCSS, Pinia
+- Deployment: Docker / Docker Compose
 
-- 管理员使用记录默认展示 User-Agent
-- Token 明细和成本明细图标对齐
-- 侧边栏滚动位置保持，不再切换菜单后跳顶
-- 账号编辑页保留并回显二开配置项
-- 移动端部分页面留白和弹层体验优化
+## Development
 
----
-
-## 技术栈
-
-| 组件 | 技术 |
-|------|------|
-| 后端 | Go 1.25.7, Gin, Ent |
-| 前端 | Vue 3.4+, Vite 5+, TailwindCSS |
-| 数据库 | PostgreSQL 15+ |
-| 缓存/队列 | Redis 7+ |
-| 部署 | Docker / Docker Compose / 二进制 |
-
----
-
-## 重要数据表说明
-
-| 表 | 用途 |
-|----|------|
-| `users` | 用户、余额、状态等 |
-| `api_keys` | 用户 API Key |
-| `accounts` | 上游账号配置 |
-| `redeem_codes` | 真实兑换码、兑换记录 |
-| `user_daily_checkins` | 每日签到奖励记录 |
-
-注意：签到奖励不应写入 `redeem_codes`。二开版已经将签到记录独立到 `user_daily_checkins`，并在用户侧最近活动中合并展示。
-
----
-
-## Nginx 反向代理注意事项
-
-通过 Nginx 反向代理并配合 Codex CLI / Claude Code 等客户端使用时，建议在 Nginx 的 `http` 块中开启：
-
-```nginx
-underscores_in_headers on;
-```
-
-Nginx 默认可能丢弃包含下划线的请求头，例如 `session_id`，会影响多账号场景下的粘性会话。
-
----
-
-## 部署说明
-
-### Docker Compose
-
-推荐生产环境使用 Docker Compose 部署 PostgreSQL、Redis 和 Sub2API 服务。
+### Frontend
 
 ```bash
-# 克隆仓库
-git clone https://github.com/Wei-Shaw/sub2api.git
-cd sub2api/deploy
-
-# 准备环境变量
-cp .env.example .env
-
-# 编辑 .env，至少配置数据库密码、JWT_SECRET、TOTP_ENCRYPTION_KEY
-nano .env
-
-# 启动
-docker compose up -d
-
-# 查看状态
-docker compose ps
-
-# 查看日志
-docker compose logs -f sub2api
-```
-
-### 源码编译
-
-```bash
-# 前端构建
 cd frontend
-pnpm install
-pnpm build
+corepack pnpm install
+corepack pnpm exec vue-tsc --noEmit
+corepack pnpm build
+```
 
-# 后端编译，注意必须带 embed 标签
+### Backend
+
+```bash
+cd backend
+GOCACHE=$PWD/.cache/go-build \
+GOMODCACHE=$PWD/.cache/go-mod \
+GOPROXY=https://goproxy.cn,direct \
+go test ./internal/handler/admin ./internal/server ./cmd/server ./internal/service ./internal/server/middleware -count=1
+```
+
+### Embedded Binary Build
+
+Build the frontend first, then build the backend with the `embed` tag:
+
+```bash
+cd frontend
+corepack pnpm build
+
 cd ../backend
-go build -tags embed -o sub2api ./cmd/server
+GOCACHE=$PWD/.cache/go-build \
+GOMODCACHE=$PWD/.cache/go-mod \
+GOPROXY=https://goproxy.cn,direct \
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+go build -tags embed \
+  -ldflags "-X main.Version=0.1.120 -X main.BuildType=source" \
+  -o main ./cmd/server
 ```
 
-`-tags embed` 会把前端产物嵌入到后端二进制。不带该参数时，线上 `/`、`/login` 等页面可能无法访问。
+Production containers normally execute `/app/sub2api`; do not replace `/app/main` by mistake.
 
----
+## Deployment Notes
 
-## 配置建议
+- Back up branding/settings before deployment: site name, subtitle, logo, custom menu, and check-in reward config.
+- Do not deploy an old image over the current custom feature set.
+- When editing Compose, update only `services.sub2api.image`; do not touch Postgres/Redis images.
+- Frontend changes must be embedded through `pnpm build` + `go build -tags embed`.
+- Stale Codex installer paths under `/downloads/codex/...` should keep returning 404.
+- Inject version ldflags during release builds, otherwise public settings/sidebar may show an old version.
 
-### 安全配置
+## Important Tables / Settings
 
-- 生产环境必须使用 HTTPS
-- 为 `JWT_SECRET`、`TOTP_ENCRYPTION_KEY`、数据库密码生成高强度随机值
-- 不要将 API Key、上游账号 Cookie、OAuth Token 提交到仓库
-- 管理后台建议限制访问来源或接入额外认证/WAF
+- `settings`: site branding, logo, custom menus, check-in reward config, and other options.
+- `user_daily_checkins`: daily check-in records.
+- `timed_user_grants`: limited-time grant records.
+- `redeem_codes`: redeem-code business only; not used for check-in rewards.
 
-### 运营配置
+## License
 
-- 根据账号类型配置模型白名单
-- 对高价值账号配置 5h / 7d 剩余额度阈值
-- 对只支持 Chat Completions 的上游账号开启原生 Chat Completions 出站
-- 定期查看使用记录、错误日志和账号健康状态
-
----
-
-## 项目结构
-
-```text
-sub2api/
-├── backend/                  # Go 后端服务
-│   ├── cmd/server/           # 应用入口
-│   ├── internal/             # 内部模块
-│   │   ├── config/           # 配置管理
-│   │   ├── handler/          # HTTP 处理器
-│   │   ├── repository/       # 数据访问
-│   │   ├── service/          # 业务逻辑
-│   │   └── gateway/          # API 网关核心
-│   ├── migrations/           # 数据库迁移
-│   └── resources/            # 静态资源与模型价格等
-│
-├── frontend/                 # Vue 3 前端
-│   └── src/
-│       ├── api/              # API 调用
-│       ├── stores/           # 状态管理
-│       ├── views/            # 页面组件
-│       └── components/       # 通用组件
-│
-└── deploy/                   # 部署文件
-    ├── docker-compose.yml
-    ├── .env.example
-    └── config.example.yaml
-```
-
----
-
-## 免责声明
-
-本项目为基于 Sub2API 的二次开发版本，仅供技术学习、研究与自建服务使用。使用者需要自行确认上游服务条款、账号安全、数据安全和合规风险。
-
-因使用本项目造成的账户封禁、服务中断、数据丢失、费用损失或其他问题，项目维护者不承担责任。
-
----
-
-## 许可证
-
-本项目延续上游项目许可证，基于 [GNU 宽通用公共许可证 v3.0](LICENSE)（或更高版本）授权。
+This fork inherits the upstream Sub2API license. Custom changes are maintained for SekiroCloud production operations.

@@ -21,7 +21,6 @@ type AdminHandlers struct {
 	Redeem                 *admin.RedeemHandler
 	Promo                  *admin.PromoHandler
 	Setting                *admin.SettingHandler
-	ModelCatalog           *admin.ModelCatalogHandler
 	Ops                    *admin.OpsHandler
 	System                 *admin.SystemHandler
 	Subscription           *admin.SubscriptionHandler
@@ -36,6 +35,8 @@ type AdminHandlers struct {
 	ChannelMonitorTemplate *admin.ChannelMonitorRequestTemplateHandler
 	Payment                *admin.PaymentHandler
 	Affiliate              *admin.AffiliateHandler
+	ModelCatalog           *admin.ModelCatalogHandler
+	DailyCheckin           *admin.DailyCheckinHandler
 }
 
 // Handlers contains all HTTP handlers

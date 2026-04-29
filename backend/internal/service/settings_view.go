@@ -113,6 +113,8 @@ type SystemSettings struct {
 	AffiliateRebatePerInviteeCap float64
 	DefaultUserRPMLimit          int
 	DefaultSubscriptions         []DefaultSubscriptionSetting
+	DailyCheckinRewardMin        int
+	DailyCheckinRewardMax        int
 
 	// Model fallback configuration
 	EnableModelFallback      bool   `json:"enable_model_fallback"`

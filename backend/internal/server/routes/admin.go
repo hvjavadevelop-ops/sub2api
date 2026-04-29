@@ -50,6 +50,12 @@ func RegisterAdminRoutes(
 		// 优惠码管理
 		registerPromoCodeRoutes(admin, h)
 
+		// 签到管理
+		registerDailyCheckinRoutes(admin, h)
+
+		// 模型配置
+		registerModelCatalogRoutes(admin, h)
+
 		// 系统设置
 		registerSettingsRoutes(admin, h)
 
@@ -226,6 +232,8 @@ func registerUserManagementRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
 		users.GET("/:id/api-keys", h.Admin.User.GetUserAPIKeys)
 		users.GET("/:id/usage", h.Admin.User.GetUserUsage)
 		users.GET("/:id/balance-history", h.Admin.User.GetBalanceHistory)
+		users.GET("/:id/timed-grants", h.Admin.User.ListTimedGrants)
+		users.POST("/:id/timed-grants", h.Admin.User.CreateTimedGrant)
 		users.POST("/:id/replace-group", h.Admin.User.ReplaceGroup)
 		users.GET("/:id/rpm-status", h.Admin.User.GetUserRPMStatus)
 
@@ -394,10 +402,19 @@ func registerPromoCodeRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
 	}
 }
 
-func registerSettingsRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
+func registerDailyCheckinRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
+	dailyCheckins := admin.Group("/daily-checkins")
+	{
+		dailyCheckins.GET("", h.Admin.DailyCheckin.List)
+	}
+}
+
+func registerModelCatalogRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
 	admin.GET("/model-catalog", h.Admin.ModelCatalog.Get)
 	admin.PUT("/model-catalog", h.Admin.ModelCatalog.Update)
+}
 
+func registerSettingsRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
 	adminSettings := admin.Group("/settings")
 	{
 		adminSettings.GET("", h.Admin.Setting.GetSettings)

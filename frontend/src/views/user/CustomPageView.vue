@@ -43,7 +43,11 @@
           </div>
         </div>
 
-        <div v-else class="custom-embed-shell">
+        <div v-else-if="openMode === 'iframe'" class="custom-embed-shell">
+          <div class="custom-embed-notice">
+            <Icon name="infoCircle" size="sm" class="mr-1.5" :stroke-width="2" />
+            {{ t('customPage.iframeNotice') }}
+          </div>
           <a
             :href="embeddedUrl"
             target="_blank"
@@ -58,6 +62,31 @@
             class="custom-embed-frame"
             allowfullscreen
           ></iframe>
+        </div>
+
+        <div v-else class="flex h-full items-center justify-center p-10 text-center">
+          <div class="max-w-md">
+            <div
+              class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary-50 dark:bg-primary-900/30"
+            >
+              <Icon name="externalLink" size="lg" class="text-primary-500" />
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+              {{ t('customPage.newTabTitle') }}
+            </h3>
+            <p class="mt-2 text-sm text-gray-500 dark:text-dark-400">
+              {{ t('customPage.newTabDesc') }}
+            </p>
+            <a
+              :href="embeddedUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="btn btn-primary mt-5 inline-flex"
+            >
+              <Icon name="externalLink" size="sm" class="mr-1.5" :stroke-width="2" />
+              {{ t('customPage.openInNewTab') }}
+            </a>
+          </div>
         </div>
       </div>
     </div>
@@ -116,6 +145,8 @@ const isValidUrl = computed(() => {
   return url.startsWith('http://') || url.startsWith('https://')
 })
 
+const openMode = computed(() => menuItem.value?.open_mode || 'new_tab')
+
 onMounted(async () => {
   pageTheme.value = detectTheme()
 
@@ -162,6 +193,11 @@ onUnmounted(() => {
 .custom-open-fab {
   @apply absolute right-3 top-3 z-10;
   @apply shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/80 dark:supports-[backdrop-filter]:bg-dark-800/80;
+}
+
+.custom-embed-notice {
+  @apply absolute left-3 top-3 z-10 flex items-center rounded-lg px-3 py-1.5 text-xs;
+  @apply bg-amber-50/90 text-amber-700 shadow-sm backdrop-blur dark:bg-amber-900/30 dark:text-amber-200;
 }
 
 .custom-embed-frame {

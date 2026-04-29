@@ -223,6 +223,29 @@ export async function getUserUsageStats(
 /**
  * Balance history item returned from the API
  */
+export interface TimedUserGrant {
+  id: number
+  user_id: number
+  grant_type: 'balance' | 'concurrency'
+  amount: number
+  duration_seconds: number
+  status: 'pending' | 'active' | 'expired'
+  activated_at?: string | null
+  expires_at?: string | null
+  expired_at?: string | null
+  deducted_amount: number
+  notes: string
+  created_at: string
+  updated_at: string
+}
+
+export interface CreateTimedGrantRequest {
+  grant_type: 'balance' | 'concurrency'
+  amount: number
+  duration_seconds: number
+  notes?: string
+}
+
 export interface BalanceHistoryItem {
   id: number
   code: string
@@ -286,6 +309,16 @@ export async function replaceGroup(
   return data
 }
 
+export async function listTimedGrants(userId: number): Promise<TimedUserGrant[]> {
+  const { data } = await apiClient.get<TimedUserGrant[]>(`/admin/users/${userId}/timed-grants`)
+  return data
+}
+
+export async function createTimedGrant(userId: number, input: CreateTimedGrantRequest): Promise<TimedUserGrant> {
+  const { data } = await apiClient.post<TimedUserGrant>(`/admin/users/${userId}/timed-grants`, input)
+  return data
+}
+
 export async function bindUserAuthIdentity(
   userId: number,
   input: AdminBindAuthIdentityRequest
@@ -310,6 +343,8 @@ export const usersAPI = {
   getUserUsageStats,
   getUserBalanceHistory,
   replaceGroup,
+  listTimedGrants,
+  createTimedGrant,
   bindUserAuthIdentity
 }
 

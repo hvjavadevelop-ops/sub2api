@@ -168,6 +168,7 @@ export interface CustomMenuItem {
   label: string
   icon_svg: string
   url: string
+  open_mode?: 'new_tab' | 'iframe'
   visibility: 'user' | 'admin'
   sort_order: number
 }
@@ -844,6 +845,8 @@ export interface Account {
   quota_daily_used?: number | null
   quota_weekly_limit?: number | null
   quota_weekly_used?: number | null
+  codex_5h_stop_remaining_percent?: number | null
+  codex_7d_stop_remaining_percent?: number | null
 
   // 配额固定时间重置配置
   quota_daily_reset_mode?: 'rolling' | 'fixed' | null

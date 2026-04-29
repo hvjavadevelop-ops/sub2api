@@ -15,7 +15,11 @@ import (
 
 // NewAPIKeyAuthMiddleware 创建 API Key 认证中间件
 func NewAPIKeyAuthMiddleware(apiKeyService *service.APIKeyService, subscriptionService *service.SubscriptionService, cfg *config.Config) APIKeyAuthMiddleware {
-	return APIKeyAuthMiddleware(apiKeyAuthWithSubscription(apiKeyService, subscriptionService, cfg))
+	return APIKeyAuthMiddleware(apiKeyAuthWithSubscription(apiKeyService, subscriptionService, cfg, nil))
+}
+
+func NewAPIKeyAuthMiddlewareWithTimedGrants(apiKeyService *service.APIKeyService, subscriptionService *service.SubscriptionService, cfg *config.Config, timedGrantService *service.TimedUserGrantService) APIKeyAuthMiddleware {
+	return APIKeyAuthMiddleware(apiKeyAuthWithSubscription(apiKeyService, subscriptionService, cfg, timedGrantService))
 }
 
 // apiKeyAuthWithSubscription API Key认证中间件（支持订阅验证）
@@ -25,7 +29,7 @@ func NewAPIKeyAuthMiddleware(apiKeyService *service.APIKeyService, subscriptionS
 //   - 计费执行（Billing Enforcement）：过期/配额/订阅/余额检查 —— skipBilling 时整块跳过
 //
 // /v1/usage 端点只需鉴权，不需要计费执行（允许过期/配额耗尽的 Key 查询自身用量）。
-func apiKeyAuthWithSubscription(apiKeyService *service.APIKeyService, subscriptionService *service.SubscriptionService, cfg *config.Config) gin.HandlerFunc {
+func apiKeyAuthWithSubscription(apiKeyService *service.APIKeyService, subscriptionService *service.SubscriptionService, cfg *config.Config, timedGrantService *service.TimedUserGrantService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// ── 1. 提取 API Key ──────────────────────────────────────────
 
@@ -109,7 +113,16 @@ func apiKeyAuthWithSubscription(apiKeyService *service.APIKeyService, subscripti
 			return
 		}
 
-		// ── 4. SimpleMode → early return ─────────────────────────────
+		// ── 4. 首次 API 使用激活待生效的限时权益 ─────────────────────
+		if timedGrantService != nil {
+			if activated, activateErr := timedGrantService.ActivatePendingUserGrants(c.Request.Context(), apiKey.User.ID); activateErr == nil && activated > 0 {
+				if refreshedKey, refreshErr := apiKeyService.GetByKey(c.Request.Context(), apiKeyString); refreshErr == nil && refreshedKey != nil && refreshedKey.User != nil {
+					apiKey = refreshedKey
+				}
+			}
+		}
+
+		// ── 5. SimpleMode → early return ─────────────────────────────
 
 		if cfg.RunMode == config.RunModeSimple {
 			c.Set(string(ContextKeyAPIKey), apiKey)

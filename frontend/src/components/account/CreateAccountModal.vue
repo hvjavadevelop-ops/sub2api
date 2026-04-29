@@ -855,6 +855,7 @@
             v-model="apiKeyBaseUrl"
             type="text"
             class="input"
+            @blur="maybeAutoFetchUpstreamModels"
             :placeholder="
               form.platform === 'openai'
                 ? 'https://api.openai.com'
@@ -872,6 +873,7 @@
             type="password"
             required
             class="input font-mono"
+            @blur="maybeAutoFetchUpstreamModels"
             :placeholder="
               form.platform === 'openai'
                 ? 'sk-proj-...'
@@ -881,6 +883,45 @@
             "
           />
           <p class="input-hint">{{ apiKeyHint }}</p>
+        </div>
+
+        <div class="rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-900/20">
+          <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p class="text-sm font-medium text-blue-800 dark:text-blue-300">
+                {{ t('admin.accounts.modelDiscoveryTitle') }}
+              </p>
+              <p class="mt-1 text-xs text-blue-700 dark:text-blue-400">
+                {{ t('admin.accounts.modelDiscoveryHint') }}
+              </p>
+            </div>
+            <button
+              type="button"
+              class="btn btn-secondary text-sm"
+              :disabled="modelDiscoveryLoading || !apiKeyBaseUrl.trim() || !apiKeyValue.trim()"
+              @click="() => fetchUpstreamModelsForApiKey()"
+            >
+              {{ modelDiscoveryLoading ? t('admin.accounts.modelDiscoveryLoading') : t('admin.accounts.modelDiscoveryButton') }}
+            </button>
+          </div>
+          <p v-if="modelDiscoveryError" class="mt-2 rounded bg-red-100 px-3 py-2 text-xs text-red-700 dark:bg-red-900/30 dark:text-red-300">
+            {{ t('admin.accounts.modelDiscoveryError') }}：{{ modelDiscoveryError }}
+          </p>
+          <div v-if="modelDiscoveryModels.length > 0" class="mt-2 space-y-2">
+            <p class="text-xs text-blue-700 dark:text-blue-300">
+              {{ t('admin.accounts.modelDiscoveryFound', { count: modelDiscoveryModels.length }) }}
+            </p>
+            <div class="max-h-24 overflow-y-auto rounded bg-white/70 p-2 text-xs text-gray-700 dark:bg-dark-700/70 dark:text-gray-300">
+              {{ modelDiscoveryModels.join(', ') }}
+            </div>
+            <button
+              type="button"
+              class="text-xs font-medium text-blue-700 hover:underline dark:text-blue-300"
+              @click="addDiscoveredModelsToMapping"
+            >
+              {{ t('admin.accounts.modelDiscoveryAddToMapping') }}
+            </button>
+          </div>
         </div>
 
         <!-- Gemini API Key tier selection -->
@@ -1502,6 +1543,8 @@
           :quotaNotifyTotalEnabled="quotaNotifyState.total.enabled"
           :quotaNotifyTotalThreshold="quotaNotifyState.total.threshold"
           :quotaNotifyTotalThresholdType="quotaNotifyState.total.thresholdType"
+          :codex5hStopRemainingPercent="editCodex5hStopRemainingPercent"
+          :codex7dStopRemainingPercent="editCodex7dStopRemainingPercent"
           :dailyResetMode="editDailyResetMode"
           :dailyResetHour="editDailyResetHour"
           :weeklyResetMode="editWeeklyResetMode"
@@ -1520,6 +1563,8 @@
           @update:quotaNotifyTotalEnabled="quotaNotifyState.total.enabled = $event"
           @update:quotaNotifyTotalThreshold="quotaNotifyState.total.threshold = $event"
           @update:quotaNotifyTotalThresholdType="quotaNotifyState.total.thresholdType = $event"
+          @update:codex5hStopRemainingPercent="editCodex5hStopRemainingPercent = $event"
+          @update:codex7dStopRemainingPercent="editCodex7dStopRemainingPercent = $event"
           @update:dailyResetMode="editDailyResetMode = $event"
           @update:dailyResetHour="editDailyResetHour = $event"
           @update:weeklyResetMode="editWeeklyResetMode = $event"
@@ -1554,6 +1599,8 @@
           :quotaNotifyTotalEnabled="quotaNotifyState.total.enabled"
           :quotaNotifyTotalThreshold="quotaNotifyState.total.threshold"
           :quotaNotifyTotalThresholdType="quotaNotifyState.total.thresholdType"
+          :codex5hStopRemainingPercent="editCodex5hStopRemainingPercent"
+          :codex7dStopRemainingPercent="editCodex7dStopRemainingPercent"
           :dailyResetMode="editDailyResetMode"
           :dailyResetHour="editDailyResetHour"
           :weeklyResetMode="editWeeklyResetMode"
@@ -1572,6 +1619,8 @@
           @update:quotaNotifyTotalEnabled="quotaNotifyState.total.enabled = $event"
           @update:quotaNotifyTotalThreshold="quotaNotifyState.total.threshold = $event"
           @update:quotaNotifyTotalThresholdType="quotaNotifyState.total.thresholdType = $event"
+          @update:codex5hStopRemainingPercent="editCodex5hStopRemainingPercent = $event"
+          @update:codex7dStopRemainingPercent="editCodex7dStopRemainingPercent = $event"
           @update:dailyResetMode="editDailyResetMode = $event"
           @update:dailyResetHour="editDailyResetHour = $event"
           @update:weeklyResetMode="editWeeklyResetMode = $event"
@@ -2348,6 +2397,43 @@
         </div>
       </div>
 
+      <!-- OpenAI API Key 自定义出站协议：默认关闭，保持 Sub2API 原逻辑 -->
+      <div
+        v-if="form.platform === 'openai' && accountCategory === 'apikey'"
+        class="border-t border-gray-200 pt-4 dark:border-dark-600"
+      >
+        <div class="flex items-center justify-between gap-4">
+          <div>
+            <label class="input-label mb-0">{{ t('admin.accounts.openai.customOutboundProtocol') }}</label>
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              {{ t('admin.accounts.openai.customOutboundProtocolDesc') }}
+            </p>
+          </div>
+          <button
+            type="button"
+            @click="customOpenAIOutboundEnabled = !customOpenAIOutboundEnabled"
+            :class="[
+              'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
+              customOpenAIOutboundEnabled ? 'bg-primary-600' : 'bg-gray-200 dark:bg-dark-600'
+            ]"
+          >
+            <span
+              :class="[
+                'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                customOpenAIOutboundEnabled ? 'translate-x-5' : 'translate-x-0'
+              ]"
+            />
+          </button>
+        </div>
+        <div v-if="customOpenAIOutboundEnabled" class="mt-3">
+          <label class="input-label">{{ t('admin.accounts.openai.outboundProtocol') }}</label>
+          <select v-model="openAIOutboundProtocol" class="input">
+            <option value="responses">{{ t('admin.accounts.openai.outboundProtocolResponses') }}</option>
+            <option value="chat_completions">{{ t('admin.accounts.openai.outboundProtocolChatCompletions') }}</option>
+          </select>
+        </div>
+      </div>
+
       <!-- OpenAI WS Mode 三态（off/ctx_pool/passthrough） -->
       <div
         v-if="form.platform === 'openai' && (accountCategory === 'oauth-based' || accountCategory === 'apikey')"
@@ -2940,6 +3026,10 @@ import {
   fetchAntigravityDefaultMappings,
   isValidWildcardPattern
 } from '@/composables/useModelWhitelist'
+import {
+  fetchOpenAICompatibleModels,
+  formatOpenAIModelDiscoveryError
+} from '@/composables/upstreamModelDiscovery'
 import { useAuthStore } from '@/stores/auth'
 import { adminAPI } from '@/api/admin'
 import { useQuotaNotifyState } from '@/composables/useQuotaNotifyState'
@@ -3089,9 +3179,15 @@ const accountCategory = ref<'oauth-based' | 'apikey' | 'bedrock'>('oauth-based')
 const addMethod = ref<AddMethod>('oauth') // For oauth-based: 'oauth' or 'setup-token'
 const apiKeyBaseUrl = ref('https://api.anthropic.com')
 const apiKeyValue = ref('')
+const modelDiscoveryLoading = ref(false)
+const modelDiscoveryError = ref('')
+const modelDiscoveryModels = ref<string[]>([])
+const modelDiscoveryAttemptKey = ref('')
 const editQuotaLimit = ref<number | null>(null)
 const editQuotaDailyLimit = ref<number | null>(null)
 const editQuotaWeeklyLimit = ref<number | null>(null)
+const editCodex5hStopRemainingPercent = ref<number | null>(null)
+const editCodex7dStopRemainingPercent = ref<number | null>(null)
 const editDailyResetMode = ref<'rolling' | 'fixed' | null>(null)
 const editDailyResetHour = ref<number | null>(null)
 const editWeeklyResetMode = ref<'rolling' | 'fixed' | null>(null)
@@ -3112,6 +3208,8 @@ const customErrorCodeInput = ref<number | null>(null)
 const interceptWarmupRequests = ref(false)
 const autoPauseOnExpired = ref(true)
 const openaiPassthroughEnabled = ref(false)
+const customOpenAIOutboundEnabled = ref(false)
+const openAIOutboundProtocol = ref<'responses' | 'chat_completions'>('responses')
 const openAICompactMode = ref<OpenAICompactMode>('auto')
 const openaiOAuthResponsesWebSocketV2Mode = ref<OpenAIWSMode>(OPENAI_WS_MODE_OFF)
 const openaiAPIKeyResponsesWebSocketV2Mode = ref<OpenAIWSMode>(OPENAI_WS_MODE_OFF)
@@ -3255,9 +3353,8 @@ const openAIWSModeConcurrencyHintKey = computed(() =>
   resolveOpenAIWSModeConcurrencyHintKey(openaiResponsesWebSocketV2Mode.value)
 )
 
-const isOpenAIModelRestrictionDisabled = computed(() =>
-  form.platform === 'openai' && openaiPassthroughEnabled.value
-)
+// OpenAI 透传不再禁用模型白名单/映射配置：管理员需要在透传开启时继续维护对外模型名。
+const isOpenAIModelRestrictionDisabled = computed(() => false)
 
 const mixedChannelWarningMessageText = computed(() => {
   if (mixedChannelWarningDetails.value) {
@@ -3432,6 +3529,9 @@ watch(
     // Clear model-related settings
     allowedModels.value = []
     modelMappings.value = []
+    modelDiscoveryModels.value = []
+    modelDiscoveryError.value = ''
+    modelDiscoveryAttemptKey.value = ''
     // Antigravity: 默认使用映射模式并填充默认映射
     if (newPlatform === 'antigravity') {
       antigravityModelRestrictionMode.value = 'mapping'
@@ -3461,6 +3561,8 @@ watch(
     }
     if (newPlatform !== 'openai') {
       openaiPassthroughEnabled.value = false
+      customOpenAIOutboundEnabled.value = false
+      openAIOutboundProtocol.value = 'responses'
       openaiOAuthResponsesWebSocketV2Mode.value = OPENAI_WS_MODE_OFF
       openaiAPIKeyResponsesWebSocketV2Mode.value = OPENAI_WS_MODE_OFF
       codexCLIOnlyEnabled.value = false
@@ -3520,7 +3622,7 @@ const handleSelectGeminiOAuthType = (oauthType: 'code_assist' | 'google_one' | '
 watch(
   [modelRestrictionMode, () => form.platform],
   ([newMode]) => {
-    if (newMode === 'whitelist') {
+    if (newMode === 'whitelist' && allowedModels.value.length === 0) {
       allowedModels.value = [...getModelsByPlatform(form.platform)]
     }
   }
@@ -3558,6 +3660,60 @@ const addPresetMapping = (from: string, to: string) => {
     return
   }
   modelMappings.value.push({ from, to })
+}
+
+const mergeDiscoveredModels = (models: string[]) => {
+  const existing = new Set(allowedModels.value)
+  for (const model of models) {
+    if (!existing.has(model)) {
+      allowedModels.value.push(model)
+      existing.add(model)
+    }
+  }
+}
+
+const addDiscoveredModelsToMapping = () => {
+  for (const model of modelDiscoveryModels.value) {
+    if (!modelMappings.value.some((m) => m.from === model)) {
+      modelMappings.value.push({ from: model, to: model })
+    }
+  }
+  modelRestrictionMode.value = 'mapping'
+}
+
+const fetchUpstreamModelsForApiKey = async (options: { silentValidation?: boolean } = {}) => {
+  if (!apiKeyBaseUrl.value.trim()) {
+    if (!options.silentValidation) appStore.showError(t('admin.accounts.pleaseEnterBaseUrl'))
+    return
+  }
+  if (!apiKeyValue.value.trim()) {
+    if (!options.silentValidation) appStore.showError(t('admin.accounts.pleaseEnterApiKey'))
+    return
+  }
+
+  const attemptKey = `${apiKeyBaseUrl.value.trim()}|${apiKeyValue.value.trim()}`
+  modelDiscoveryAttemptKey.value = attemptKey
+  modelDiscoveryLoading.value = true
+  modelDiscoveryError.value = ''
+  try {
+    const models = await fetchOpenAICompatibleModels(apiKeyBaseUrl.value, apiKeyValue.value)
+    modelDiscoveryModels.value = models
+    mergeDiscoveredModels(models)
+    modelRestrictionMode.value = 'whitelist'
+    appStore.showSuccess(t('admin.accounts.modelDiscoverySuccess', { count: models.length }))
+  } catch (error) {
+    modelDiscoveryError.value = formatOpenAIModelDiscoveryError(error)
+  } finally {
+    modelDiscoveryLoading.value = false
+  }
+}
+
+const maybeAutoFetchUpstreamModels = () => {
+  if (form.type !== 'apikey' || form.platform === 'antigravity') return
+  if (modelDiscoveryLoading.value || !apiKeyBaseUrl.value.trim() || !apiKeyValue.value.trim()) return
+  const attemptKey = `${apiKeyBaseUrl.value.trim()}|${apiKeyValue.value.trim()}`
+  if (modelDiscoveryAttemptKey.value === attemptKey) return
+  fetchUpstreamModelsForApiKey({ silentValidation: true })
 }
 
 const addAntigravityModelMapping = () => {
@@ -3840,6 +3996,9 @@ const resetForm = () => {
   editWeeklyResetHour.value = null
   editResetTimezone.value = null
   modelMappings.value = []
+  modelDiscoveryModels.value = []
+  modelDiscoveryError.value = ''
+  modelDiscoveryAttemptKey.value = ''
   openAICompactModelMappings.value = []
   modelRestrictionMode.value = 'whitelist'
   allowedModels.value = [...claudeModels] // Default fill related models
@@ -3857,6 +4016,8 @@ const resetForm = () => {
   interceptWarmupRequests.value = false
   autoPauseOnExpired.value = true
   openaiPassthroughEnabled.value = false
+  customOpenAIOutboundEnabled.value = false
+  openAIOutboundProtocol.value = 'responses'
   openAICompactMode.value = 'auto'
   openaiOAuthResponsesWebSocketV2Mode.value = OPENAI_WS_MODE_OFF
   openaiAPIKeyResponsesWebSocketV2Mode.value = OPENAI_WS_MODE_OFF
@@ -3928,6 +4089,13 @@ const buildOpenAIExtra = (base?: Record<string, unknown>): Record<string, unknow
   } else {
     delete extra.openai_passthrough
     delete extra.openai_oauth_passthrough
+  }
+  if (accountCategory.value === 'apikey' && customOpenAIOutboundEnabled.value) {
+    extra.custom_openai_outbound_enabled = true
+    extra.openai_outbound_protocol = openAIOutboundProtocol.value
+  } else {
+    delete extra.custom_openai_outbound_enabled
+    delete extra.openai_outbound_protocol
   }
 
   if (accountCategory.value === 'oauth-based' && codexCLIOnlyEnabled.value) {
@@ -4145,7 +4313,7 @@ const handleSubmit = async () => {
     credentials.tier_id = geminiTierAIStudio.value
   }
 
-  // Add model mapping if configured（OpenAI 开启自动透传时不应用）
+  // Add model mapping if configured（OpenAI 透传开启时也允许管理员配置）
   if (!isOpenAIModelRestrictionDisabled.value) {
     const modelMapping = buildModelMappingObject(modelRestrictionMode.value, allowedModels.value, modelMappings.value)
     if (modelMapping) {
@@ -4251,6 +4419,12 @@ const createAccountAndFinish = async (
     if (editQuotaWeeklyLimit.value != null && editQuotaWeeklyLimit.value > 0) {
       quotaExtra.quota_weekly_limit = editQuotaWeeklyLimit.value
     }
+    if (editCodex5hStopRemainingPercent.value != null && editCodex5hStopRemainingPercent.value > 0) {
+      quotaExtra.codex_5h_stop_remaining_percent = Math.min(100, editCodex5hStopRemainingPercent.value)
+    }
+    if (editCodex7dStopRemainingPercent.value != null && editCodex7dStopRemainingPercent.value > 0) {
+      quotaExtra.codex_7d_stop_remaining_percent = Math.min(100, editCodex7dStopRemainingPercent.value)
+    }
     // Quota reset mode config
     if (editDailyResetMode.value === 'fixed') {
       quotaExtra.quota_daily_reset_mode = 'fixed'
@@ -4325,7 +4499,7 @@ const handleOpenAIExchange = async (authCode: string) => {
     const extra = buildOpenAIExtra(oauthExtra)
     const shouldCreateOpenAI = form.platform === 'openai'
 
-    // Add model mapping for OpenAI OAuth accounts（透传模式下不应用）
+    // Add model mapping for OpenAI OAuth accounts（透传模式下也应用）
     if (shouldCreateOpenAI && !isOpenAIModelRestrictionDisabled.value) {
       const modelMapping = buildModelMappingObject(modelRestrictionMode.value, allowedModels.value, modelMappings.value)
       if (modelMapping) {
@@ -4423,7 +4597,7 @@ const handleOpenAIBatchRT = async (refreshTokenInput: string, clientId?: string)
         const oauthExtra = oauthClient.buildExtraInfo(tokenInfo) as Record<string, unknown> | undefined
         const extra = buildOpenAIExtra(oauthExtra)
 
-        // Add model mapping for OpenAI OAuth accounts（透传模式下不应用）
+        // Add model mapping for OpenAI OAuth accounts（透传模式下也应用）
         if (shouldCreateOpenAI && !isOpenAIModelRestrictionDisabled.value) {
           const modelMapping = buildModelMappingObject(modelRestrictionMode.value, allowedModels.value, modelMappings.value)
           if (modelMapping) {

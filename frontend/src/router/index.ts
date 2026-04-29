@@ -506,6 +506,17 @@ const routes: RouteRecordRaw[] = [
     }
   },
   {
+    path: '/admin/daily-checkins',
+    name: 'AdminDailyCheckins',
+    component: () => import('@/views/admin/DailyCheckinView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresAdmin: true,
+      title: '签到管理',
+      descriptionKey: '后台签到管理'
+    }
+  },
+  {
     path: '/admin/promo-codes',
     name: 'AdminPromoCodes',
     component: () => import('@/views/admin/PromoCodesView.vue'),

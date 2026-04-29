@@ -2467,6 +2467,42 @@
                     {{ t("admin.settings.defaults.defaultUserRpmLimitHint") }}
                   </p>
                 </div>
+                <div>
+                  <label
+                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
+                    {{ t("admin.settings.defaults.dailyCheckinRewardMin") }}
+                  </label>
+                  <input
+                    v-model.number="form.daily_checkin_reward_min"
+                    type="number"
+                    min="0"
+                    step="1"
+                    class="input"
+                    placeholder="10"
+                  />
+                  <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                    {{ t("admin.settings.defaults.dailyCheckinRewardMinHint") }}
+                  </p>
+                </div>
+                <div>
+                  <label
+                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
+                    {{ t("admin.settings.defaults.dailyCheckinRewardMax") }}
+                  </label>
+                  <input
+                    v-model.number="form.daily_checkin_reward_max"
+                    type="number"
+                    min="0"
+                    step="1"
+                    class="input"
+                    placeholder="29"
+                  />
+                  <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                    {{ t("admin.settings.defaults.dailyCheckinRewardMaxHint") }}
+                  </p>
+                </div>
               </div>
 
               <div class="border-t border-gray-100 pt-4 dark:border-dark-700">
@@ -3864,6 +3900,9 @@
               <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 {{ t("admin.settings.customMenu.description") }}
               </p>
+              <p class="mt-2 text-xs text-amber-600 dark:text-amber-400">
+                {{ t("admin.settings.customMenu.openModeHint") }}
+              </p>
             </div>
             <div class="space-y-4 p-6">
               <!-- Existing menu items -->
@@ -3982,6 +4021,26 @@
                         {{ t("admin.settings.customMenu.visibilityAdmin") }}
                       </option>
                     </select>
+                  </div>
+
+                  <!-- Open Mode -->
+                  <div>
+                    <label
+                      class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
+                    >
+                      {{ t("admin.settings.customMenu.openMode") }}
+                    </label>
+                    <select v-model="item.open_mode" class="input text-sm">
+                      <option value="new_tab">
+                        {{ t("admin.settings.customMenu.openModeNewTab") }}
+                      </option>
+                      <option value="iframe">
+                        {{ t("admin.settings.customMenu.openModeIframe") }}
+                      </option>
+                    </select>
+                    <p class="mt-1 text-xs text-gray-400">
+                      {{ t("admin.settings.customMenu.openModeDesc") }}
+                    </p>
                   </div>
 
                   <!-- URL (full width) -->
@@ -5676,6 +5735,8 @@ const form = reactive<SettingsForm>({
   affiliate_rebate_per_invitee_cap: 0,
   default_concurrency: 1,
   default_subscriptions: [],
+  daily_checkin_reward_min: 10,
+  daily_checkin_reward_max: 29,
   force_email_on_third_party_signup: false,
   default_user_rpm_limit: 0,
   site_name: "Sub2API",
@@ -5714,6 +5775,7 @@ const form = reactive<SettingsForm>({
     label: string;
     icon_svg: string;
     url: string;
+    open_mode?: "new_tab" | "iframe";
     visibility: "user" | "admin";
     sort_order: number;
   }>,
@@ -6249,6 +6311,7 @@ function addMenuItem() {
     label: "",
     icon_svg: "",
     url: "",
+    open_mode: "new_tab",
     visibility: "user",
     sort_order: form.custom_menu_items.length,
   });
@@ -6328,6 +6391,10 @@ async function loadSettings() {
         (form as Record<string, unknown>)[key] = value;
       }
     }
+    form.custom_menu_items = form.custom_menu_items.map((item) => ({
+      ...item,
+      open_mode: item.open_mode || "new_tab",
+    }));
     Object.assign(authSourceDefaults, buildAuthSourceDefaultsState(settings));
     form.backend_mode_enabled = settings.backend_mode_enabled;
     form.default_subscriptions = normalizeDefaultSubscriptionSettings(
@@ -6540,6 +6607,12 @@ async function saveSettings() {
     const normalizedDefaultSubscriptions = normalizeDefaultSubscriptionSettings(
       form.default_subscriptions,
     );
+    const checkinMin = Number(form.daily_checkin_reward_min) || 0;
+    const checkinMax = Number(form.daily_checkin_reward_max) || 0;
+    if (checkinMin < 0 || checkinMax < 0 || checkinMin > checkinMax) {
+      appStore.showError(t("admin.settings.defaults.dailyCheckinRewardInvalid"));
+      return;
+    }
     const duplicateDefaultSubscription = findDuplicateDefaultSubscription(
       normalizedDefaultSubscriptions,
     );
@@ -6624,6 +6697,8 @@ async function saveSettings() {
       affiliate_rebate_per_invitee_cap: Math.max(0, Number(form.affiliate_rebate_per_invitee_cap) || 0),
       default_concurrency: form.default_concurrency,
       default_subscriptions: normalizedDefaultSubscriptions,
+      daily_checkin_reward_min: Math.max(0, Number(form.daily_checkin_reward_min) || 10),
+      daily_checkin_reward_max: Math.max(0, Number(form.daily_checkin_reward_max) || 29),
       force_email_on_third_party_signup: form.force_email_on_third_party_signup,
       default_user_rpm_limit: form.default_user_rpm_limit,
       site_name: form.site_name,

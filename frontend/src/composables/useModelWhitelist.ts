@@ -382,6 +382,70 @@ export function getPresetMappingsByPlatform(platform: string) {
   return anthropicPresetMappings
 }
 
+
+export function parseBulkModelInput(input: string): string[] {
+  const raw = input.trim()
+  if (!raw) return []
+
+  const candidates: string[] = []
+
+  try {
+    const parsed = JSON.parse(raw)
+    if (Array.isArray(parsed)) {
+      for (const item of parsed) {
+        if (typeof item === 'string') candidates.push(item)
+        else if (item && typeof item === 'object') {
+          const record = item as Record<string, unknown>
+          const value = record.id ?? record.name ?? record.model ?? record.value
+          if (typeof value === 'string') candidates.push(value)
+        }
+      }
+    } else if (parsed && typeof parsed === 'object') {
+      const record = parsed as Record<string, unknown>
+      const data = record.data
+      if (Array.isArray(data)) {
+        for (const item of data) {
+          if (typeof item === 'string') candidates.push(item)
+          else if (item && typeof item === 'object') {
+            const itemRecord = item as Record<string, unknown>
+            const value = itemRecord.id ?? itemRecord.name ?? itemRecord.model ?? itemRecord.value
+            if (typeof value === 'string') candidates.push(value)
+          }
+        }
+      } else {
+        for (const [key, value] of Object.entries(record)) {
+          if (typeof value === 'string') candidates.push(value)
+          else if (value && typeof value === 'object') candidates.push(key)
+        }
+      }
+    }
+  } catch {
+    // Fallback to loose text parsing below.
+  }
+
+  if (candidates.length === 0) {
+    const modelLikeRegex = /[A-Za-z0-9][A-Za-z0-9._:/@+-]*(?:\*[A-Za-z0-9._:/@+-]*)?/g
+    const noise = new Set([
+      'id', 'object', 'created', 'owned_by', 'permission', 'data', 'model', 'models',
+      'true', 'false', 'null', 'curl', 'Authorization', 'Bearer', 'Content-Type',
+      'application', 'json', 'https', 'http', 'api', 'v1'
+    ])
+    for (const match of raw.matchAll(modelLikeRegex)) {
+      const token = match[0].replace(/^models[\/:]+/i, '').trim()
+      if (!token || noise.has(token)) continue
+      if (/^\d+$/.test(token)) continue
+      // Avoid collecting ordinary prose. Model IDs almost always include a dash/dot/star/slash
+      // or start with well-known model/provider prefixes.
+      if (!/[._*:/-]/.test(token) && !/^(gpt|o\d|claude|gemini|glm|qwen|deepseek|grok|llama|kimi|moonshot|doubao|hunyuan|spark|ernie|sonar|mistral|command|yi|abab)/i.test(token)) {
+        continue
+      }
+      candidates.push(token)
+    }
+  }
+
+  return Array.from(new Set(candidates.map(m => m.trim()).filter(Boolean)))
+}
+
 // =====================
 // 构建模型映射对象（用于 API）
 // =====================

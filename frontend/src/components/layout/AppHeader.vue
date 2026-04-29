@@ -23,9 +23,6 @@
 
       <!-- Right: Announcements + Docs + Language + Subscriptions + Balance + User Dropdown -->
       <div class="flex items-center gap-3">
-        <!-- Daily Check-in -->
-        <DailyCheckinButton v-if="user" />
-
         <!-- Announcement Bell -->
         <AnnouncementBell v-if="user" />
 
@@ -41,8 +38,8 @@
           <span class="hidden sm:inline">{{ t('nav.docs') }}</span>
         </a>
 
-        <!-- Language Switcher -->
-        <LocaleSwitcher />
+        <!-- Daily Check-in -->
+        <DailyCheckinButton v-if="user" />
 
         <!-- Subscription Progress (for users with active subscriptions) -->
         <SubscriptionProgressMini v-if="user" />
@@ -221,7 +218,6 @@ import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAppStore, useAuthStore, useOnboardingStore } from '@/stores'
 import { useAdminSettingsStore } from '@/stores/adminSettings'
-import LocaleSwitcher from '@/components/common/LocaleSwitcher.vue'
 import SubscriptionProgressMini from '@/components/common/SubscriptionProgressMini.vue'
 import AnnouncementBell from '@/components/common/AnnouncementBell.vue'
 import DailyCheckinButton from '@/components/common/DailyCheckinButton.vue'

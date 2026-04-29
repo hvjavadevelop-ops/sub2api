@@ -19,7 +19,10 @@ func (s *settingPublicRepoStub) Get(ctx context.Context, key string) (*Setting, 
 }
 
 func (s *settingPublicRepoStub) GetValue(ctx context.Context, key string) (string, error) {
-	panic("unexpected GetValue call")
+	if value, ok := s.values[key]; ok {
+		return value, nil
+	}
+	return "", ErrSettingNotFound
 }
 
 func (s *settingPublicRepoStub) Set(ctx context.Context, key, value string) error {
@@ -37,15 +40,44 @@ func (s *settingPublicRepoStub) GetMultiple(ctx context.Context, keys []string) 
 }
 
 func (s *settingPublicRepoStub) SetMultiple(ctx context.Context, settings map[string]string) error {
-	panic("unexpected SetMultiple call")
+	if s.values == nil {
+		s.values = map[string]string{}
+	}
+	for key, value := range settings {
+		s.values[key] = value
+	}
+	return nil
 }
 
 func (s *settingPublicRepoStub) GetAll(ctx context.Context) (map[string]string, error) {
-	panic("unexpected GetAll call")
+	out := make(map[string]string, len(s.values))
+	for key, value := range s.values {
+		out[key] = value
+	}
+	return out, nil
 }
 
 func (s *settingPublicRepoStub) Delete(ctx context.Context, key string) error {
 	panic("unexpected Delete call")
+}
+
+func TestSettingService_InitializeDefaultSettings_PreservesExistingSettingsWhenSentinelMissing(t *testing.T) {
+	repo := &settingPublicRepoStub{
+		values: map[string]string{
+			SettingKeySiteName:        "云栖小铺",
+			SettingKeySiteSubtitle:    "于云端，贩卖算力与光",
+			SettingKeySiteLogo:        "data:image/webp;base64,custom-logo",
+			SettingKeyCustomMenuItems: `[{"label":"custom"}]`,
+		},
+	}
+	svc := NewSettingService(repo, &config.Config{})
+
+	require.NoError(t, svc.InitializeDefaultSettings(context.Background()))
+	require.Equal(t, "云栖小铺", repo.values[SettingKeySiteName])
+	require.Equal(t, "于云端，贩卖算力与光", repo.values[SettingKeySiteSubtitle])
+	require.Equal(t, "data:image/webp;base64,custom-logo", repo.values[SettingKeySiteLogo])
+	require.Equal(t, `[{"label":"custom"}]`, repo.values[SettingKeyCustomMenuItems])
+	require.Equal(t, "true", repo.values[SettingKeyRegistrationEnabled])
 }
 
 func TestSettingService_GetPublicSettings_ExposesRegistrationEmailSuffixWhitelist(t *testing.T) {

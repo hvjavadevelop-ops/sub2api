@@ -494,6 +494,15 @@
                 <span class="text-xs">{{ row.status === 'active' ? t('admin.users.disable') : t('admin.users.enable') }}</span>
               </button>
 
+              <!-- Timed Grants Button -->
+              <button
+                @click="handleTimedGrant(row)"
+                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-indigo-500 transition-colors hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-900/20 dark:hover:text-indigo-400"
+              >
+                <Icon name="clock" size="sm" />
+                <span class="text-xs">限时权益</span>
+              </button>
+
               <!-- More Actions Menu Trigger -->
               <button
                 @click="openActionMenu(row, $event)"
@@ -589,6 +598,15 @@
                 {{ t('admin.users.balanceHistory') }}
               </button>
 
+              <!-- Timed Grants -->
+              <button
+                @click="handleTimedGrant(user); closeActionMenu()"
+                class="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-dark-700"
+              >
+                <Icon name="clock" size="sm" class="text-indigo-500" :stroke-width="2" />
+                限时权益
+              </button>
+
               <div class="my-1 border-t border-gray-100 dark:border-dark-700"></div>
 
               <!-- Delete (not for admin) -->
@@ -613,6 +631,7 @@
     <UserAllowedGroupsModal :show="showAllowedGroupsModal" :user="allowedGroupsUser" @close="closeAllowedGroupsModal" @success="loadUsers" />
     <UserBalanceModal :show="showBalanceModal" :user="balanceUser" :operation="balanceOperation" @close="closeBalanceModal" @success="loadUsers" />
     <UserBalanceHistoryModal :show="showBalanceHistoryModal" :user="balanceHistoryUser" @close="closeBalanceHistoryModal" @deposit="handleDepositFromHistory" @withdraw="handleWithdrawFromHistory" />
+    <UserTimedGrantModal :show="showTimedGrantModal" :user="timedGrantUser" @close="closeTimedGrantModal" @success="loadUsers" />
     <GroupReplaceModal :show="showGroupReplaceModal" :user="groupReplaceUser" :old-group="groupReplaceOldGroup" :all-groups="allGroups" @close="closeGroupReplaceModal" @success="loadUsers" />
     <UserAttributesConfigModal :show="showAttributesModal" @close="handleAttributesModalClose" />
   </AppLayout>
@@ -647,6 +666,7 @@ import UserApiKeysModal from '@/components/admin/user/UserApiKeysModal.vue'
 import UserAllowedGroupsModal from '@/components/admin/user/UserAllowedGroupsModal.vue'
 import UserBalanceModal from '@/components/admin/user/UserBalanceModal.vue'
 import UserBalanceHistoryModal from '@/components/admin/user/UserBalanceHistoryModal.vue'
+import UserTimedGrantModal from '@/components/admin/user/UserTimedGrantModal.vue'
 import GroupReplaceModal from '@/components/admin/user/GroupReplaceModal.vue'
 
 const appStore = useAppStore()
@@ -1125,6 +1145,10 @@ const balanceOperation = ref<'add' | 'subtract'>('add')
 const showBalanceHistoryModal = ref(false)
 const balanceHistoryUser = ref<AdminUser | null>(null)
 
+// Timed grants modal state
+const showTimedGrantModal = ref(false)
+const timedGrantUser = ref<AdminUser | null>(null)
+
 // 计算剩余天数
 const getDaysRemaining = (expiresAt: string): number => {
   const now = new Date()
@@ -1388,6 +1412,16 @@ const handleBalanceHistory = (user: AdminUser) => {
 const closeBalanceHistoryModal = () => {
   showBalanceHistoryModal.value = false
   balanceHistoryUser.value = null
+}
+
+const handleTimedGrant = (user: AdminUser) => {
+  timedGrantUser.value = user
+  showTimedGrantModal.value = true
+}
+
+const closeTimedGrantModal = () => {
+  showTimedGrantModal.value = false
+  timedGrantUser.value = null
 }
 
 // Handle deposit from balance history modal

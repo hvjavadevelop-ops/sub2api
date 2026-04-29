@@ -1194,6 +1194,9 @@ func (s *SettingService) buildSystemSettingsUpdates(ctx context.Context, setting
 	}
 	updates[SettingKeyAffiliateRebatePerInviteeCap] = strconv.FormatFloat(settings.AffiliateRebatePerInviteeCap, 'f', 8, 64)
 	updates[SettingKeyDefaultUserRPMLimit] = strconv.Itoa(settings.DefaultUserRPMLimit)
+	settings.DailyCheckinRewardMin, settings.DailyCheckinRewardMax = normalizeDailyCheckinRewardRange(settings.DailyCheckinRewardMin, settings.DailyCheckinRewardMax)
+	updates[SettingKeyDailyCheckinRewardMin] = strconv.Itoa(settings.DailyCheckinRewardMin)
+	updates[SettingKeyDailyCheckinRewardMax] = strconv.Itoa(settings.DailyCheckinRewardMax)
 	defaultSubsJSON, err := json.Marshal(settings.DefaultSubscriptions)
 	if err != nil {
 		return nil, fmt.Errorf("marshal default subscriptions: %w", err)
@@ -1745,14 +1748,10 @@ func (s *SettingService) UpdateAuthSourceDefaultSettings(ctx context.Context, se
 
 // InitializeDefaultSettings 初始化默认设置
 func (s *SettingService) InitializeDefaultSettings(ctx context.Context) error {
-	// 检查是否已有设置
-	_, err := s.settingRepo.GetValue(ctx, SettingKeyRegistrationEnabled)
-	if err == nil {
-		// 已有设置，不需要初始化
-		return nil
-	}
-	if !errors.Is(err, ErrSettingNotFound) {
-		return fmt.Errorf("check existing settings: %w", err)
+	// 默认初始化只能补缺失项，不能覆盖用户已经保存的配置。
+	existingSettings, err := s.settingRepo.GetAll(ctx)
+	if err != nil {
+		return fmt.Errorf("get existing settings: %w", err)
 	}
 
 	oidcUsePKCEDefault := true
@@ -1779,6 +1778,7 @@ func (s *SettingService) InitializeDefaultSettings(ctx context.Context) error {
 		SettingKeyTableDefaultPageSize:                     "20",
 		SettingKeyTablePageSizeOptions:                     "[10,20,50,100]",
 		SettingKeyCustomMenuItems:                          "[]",
+		SettingKeyModelCatalog:                             "",
 		SettingKeyCustomEndpoints:                          "[]",
 		SettingKeyWeChatConnectEnabled:                     "false",
 		SettingKeyWeChatConnectAppID:                       "",
@@ -1826,6 +1826,8 @@ func (s *SettingService) InitializeDefaultSettings(ctx context.Context) error {
 		SettingKeyAffiliateRebatePerInviteeCap:             strconv.FormatFloat(AffiliateRebatePerInviteeCapDefault, 'f', 2, 64),
 		SettingKeyDefaultUserRPMLimit:                      "0",
 		SettingKeyDefaultSubscriptions:                     "[]",
+		SettingKeyDailyCheckinRewardMin:                    strconv.Itoa(DailyCheckinDefaultMinReward),
+		SettingKeyDailyCheckinRewardMax:                    strconv.Itoa(DailyCheckinDefaultMaxReward),
 		SettingKeyAuthSourceDefaultEmailBalance:            "0",
 		SettingKeyAuthSourceDefaultEmailConcurrency:        "5",
 		SettingKeyAuthSourceDefaultEmailSubscriptions:      "[]",
@@ -1888,10 +1890,38 @@ func (s *SettingService) InitializeDefaultSettings(ctx context.Context) error {
 		openAIAdvancedSchedulerSettingKey:        "false",
 	}
 
-	return s.settingRepo.SetMultiple(ctx, defaults)
+	missingDefaults := make(map[string]string, len(defaults))
+	for key, value := range defaults {
+		if _, exists := existingSettings[key]; !exists {
+			missingDefaults[key] = value
+		}
+	}
+	if len(missingDefaults) == 0 {
+		return nil
+	}
+	return s.settingRepo.SetMultiple(ctx, missingDefaults)
 }
 
 // parseSettings 解析设置到结构体
+func parseIntOrDefault(raw string, defaultValue int) int {
+	parsed, err := strconv.Atoi(strings.TrimSpace(raw))
+	if err != nil {
+		return defaultValue
+	}
+	return parsed
+}
+
+func (s *SettingService) GetDailyCheckinRewardRange(ctx context.Context) (minReward, maxReward int) {
+	settings, err := s.settingRepo.GetMultiple(ctx, []string{SettingKeyDailyCheckinRewardMin, SettingKeyDailyCheckinRewardMax})
+	if err != nil {
+		return DailyCheckinDefaultMinReward, DailyCheckinDefaultMaxReward
+	}
+	return normalizeDailyCheckinRewardRange(
+		parseIntOrDefault(settings[SettingKeyDailyCheckinRewardMin], DailyCheckinDefaultMinReward),
+		parseIntOrDefault(settings[SettingKeyDailyCheckinRewardMax], DailyCheckinDefaultMaxReward),
+	)
+}
+
 func (s *SettingService) parseSettings(settings map[string]string) *SystemSettings {
 	emailVerifyEnabled := settings[SettingKeyEmailVerifyEnabled] == "true"
 	result := &SystemSettings{
@@ -1975,6 +2005,10 @@ func (s *SettingService) parseSettings(settings map[string]string) *SystemSettin
 		result.AffiliateRebatePerInviteeCap = perInviteeCap
 	}
 	result.DefaultSubscriptions = parseDefaultSubscriptions(settings[SettingKeyDefaultSubscriptions])
+	result.DailyCheckinRewardMin, result.DailyCheckinRewardMax = normalizeDailyCheckinRewardRange(
+		parseIntOrDefault(settings[SettingKeyDailyCheckinRewardMin], DailyCheckinDefaultMinReward),
+		parseIntOrDefault(settings[SettingKeyDailyCheckinRewardMax], DailyCheckinDefaultMaxReward),
+	)
 
 	// 敏感信息直接返回，方便测试连接时使用
 	result.SMTPPassword = settings[SettingKeySMTPPassword]

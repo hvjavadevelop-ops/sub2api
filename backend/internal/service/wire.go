@@ -404,12 +404,40 @@ func ProvideBillingCacheService(
 	return NewBillingCacheService(cache, userRepo, subRepo, apiKeyRepo, rpmCache, rateRepo, cfg)
 }
 
+// ProvideTimedUserGrantService creates and starts timed user grant expiry service.
+func ProvideTimedUserGrantService(db *sql.DB, authCacheInvalidator APIKeyAuthCacheInvalidator) *TimedUserGrantService {
+	svc := NewTimedUserGrantService(db, authCacheInvalidator)
+	svc.StartExpiryLoop(context.Background(), time.Minute)
+	return svc
+}
+
+// ProvideDailyCheckinService wires daily check-in service with setting provider.
+func ProvideDailyCheckinService(repo DailyCheckinRepository, settingService *SettingService) *DailyCheckinService {
+	return NewDailyCheckinService(repo, settingService, nil)
+}
+
+// ProvideAPIKeyService wires APIKeyService and connects rate-limit cache invalidation.
+func ProvideAPIKeyService(
+	apiKeyRepo APIKeyRepository,
+	userRepo UserRepository,
+	groupRepo GroupRepository,
+	userSubRepo UserSubscriptionRepository,
+	userGroupRateRepo UserGroupRateRepository,
+	cache APIKeyCache,
+	cfg *config.Config,
+	billingCacheService *BillingCacheService,
+) *APIKeyService {
+	svc := NewAPIKeyService(apiKeyRepo, userRepo, groupRepo, userSubRepo, userGroupRateRepo, cache, cfg)
+	svc.SetRateLimitCacheInvalidator(billingCacheService)
+	return svc
+}
+
 // ProviderSet is the Wire provider set for all services
 var ProviderSet = wire.NewSet(
 	// Core services
 	NewAuthService,
 	NewUserService,
-	NewAPIKeyService,
+	ProvideAPIKeyService,
 	ProvideAPIKeyAuthCacheInvalidator,
 	NewGroupService,
 	NewAccountService,
@@ -423,6 +451,8 @@ var ProviderSet = wire.NewSet(
 	ProvideBillingCacheService,
 	NewAnnouncementService,
 	NewAdminService,
+	ProvideDailyCheckinService,
+	ProvideTimedUserGrantService,
 	NewGatewayService,
 	NewOpenAIGatewayService,
 	NewOAuthService,

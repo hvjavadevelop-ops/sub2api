@@ -325,6 +325,26 @@ const GiftIcon = {
     )
 }
 
+const CheckinCalendarIcon = {
+  render: () =>
+    h(
+      'svg',
+      { width: '36', height: '36', viewBox: '0 0 36 36', fill: 'none', xmlns: 'http://www.w3.org/2000/svg' },
+      [
+        h('path', { d: 'M11 7V11', stroke: 'currentColor', 'stroke-width': '2.4', 'stroke-linecap': 'round' }),
+        h('path', { d: 'M25 7V11', stroke: 'currentColor', 'stroke-width': '2.4', 'stroke-linecap': 'round' }),
+        h('rect', { x: '7.5', y: '9.5', width: '21', height: '20', stroke: 'currentColor', 'stroke-width': '2.4' }),
+        h('path', { d: 'M8 15H28', stroke: 'currentColor', 'stroke-width': '2.4' }),
+        h('rect', { x: '12', y: '18', width: '2.5', height: '2.5', fill: 'currentColor' }),
+        h('rect', { x: '17', y: '18', width: '2.5', height: '2.5', fill: 'currentColor' }),
+        h('rect', { x: '22', y: '18', width: '2.5', height: '2.5', fill: 'currentColor' }),
+        h('rect', { x: '12', y: '23', width: '2.5', height: '2.5', fill: 'currentColor' }),
+        h('rect', { x: '17', y: '23', width: '2.5', height: '2.5', fill: 'currentColor' }),
+        h('rect', { x: '22', y: '23', width: '2.5', height: '2.5', fill: 'currentColor' })
+      ]
+    )
+}
+
 const UserIcon = {
   render: () =>
     h(
@@ -691,10 +711,11 @@ function buildSelfNavItems(withDashboard: boolean): NavItem[] {
     { path: '/affiliate', label: t('nav.affiliate'), icon: UsersIcon, hideInSimpleMode: true, featureFlag: flagAffiliate },
     { path: '/profile', label: t('nav.profile'), icon: UserIcon },
     ...customMenuItemsForUser.value.map((item): NavItem => ({
-      path: `/custom/${item.id}`,
+      path: item.open_mode === 'iframe' ? `/custom/${item.id}` : item.url,
       label: item.label,
       icon: null,
       iconSvg: item.icon_svg,
+      externalUrl: item.open_mode === 'iframe' ? undefined : item.url,
     })),
   )
   return items
@@ -753,6 +774,7 @@ const adminNavItems = computed((): NavItem[] => {
     { path: '/admin/proxies', label: t('nav.proxies'), icon: ServerIcon },
     { path: '/admin/redeem', label: t('nav.redeemCodes'), icon: TicketIcon, hideInSimpleMode: true },
     { path: '/admin/promo-codes', label: t('nav.promoCodes'), icon: GiftIcon, hideInSimpleMode: true },
+    { path: '/admin/daily-checkins', label: '签到管理', icon: CheckinCalendarIcon, hideInSimpleMode: true },
     {
       path: '/admin/orders',
       label: t('nav.orderManagement'),
@@ -777,14 +799,14 @@ const adminNavItems = computed((): NavItem[] => {
     filtered.push({ path: '/keys', label: t('nav.apiKeys'), icon: KeyIcon })
     filtered.push({ path: '/admin/settings', label: t('nav.settings'), icon: CogIcon })
     for (const cm of customMenuItemsForAdmin.value) {
-      filtered.push({ path: `/custom/${cm.id}`, label: cm.label, icon: null, iconSvg: cm.icon_svg })
+      filtered.push({ path: cm.open_mode === 'iframe' ? `/custom/${cm.id}` : cm.url, label: cm.label, icon: null, iconSvg: cm.icon_svg, externalUrl: cm.open_mode === 'iframe' ? undefined : cm.url })
     }
     return filtered
   }
 
   visible.push({ path: '/admin/settings', label: t('nav.settings'), icon: CogIcon })
   for (const cm of customMenuItemsForAdmin.value) {
-    visible.push({ path: `/custom/${cm.id}`, label: cm.label, icon: null, iconSvg: cm.icon_svg })
+    visible.push({ path: cm.open_mode === 'iframe' ? `/custom/${cm.id}` : cm.url, label: cm.label, icon: null, iconSvg: cm.icon_svg, externalUrl: cm.open_mode === 'iframe' ? undefined : cm.url })
   }
   return visible
 })

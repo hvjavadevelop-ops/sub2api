@@ -565,6 +565,22 @@ func (s *stubAdminService) AdminUpdateAPIKeyGroupID(ctx context.Context, keyID i
 	return nil, service.ErrAPIKeyNotFound
 }
 
+func (s *stubAdminService) AdminResetAPIKeyRateLimitUsage(ctx context.Context, keyID int64) (*service.APIKey, error) {
+	for i := range s.apiKeys {
+		if s.apiKeys[i].ID == keyID {
+			s.apiKeys[i].Usage5h = 0
+			s.apiKeys[i].Usage1d = 0
+			s.apiKeys[i].Usage7d = 0
+			s.apiKeys[i].Window5hStart = nil
+			s.apiKeys[i].Window1dStart = nil
+			s.apiKeys[i].Window7dStart = nil
+			k := s.apiKeys[i]
+			return &k, nil
+		}
+	}
+	return nil, service.ErrAPIKeyNotFound
+}
+
 func (s *stubAdminService) ResetAccountQuota(ctx context.Context, id int64) error {
 	return nil
 }
@@ -587,6 +603,14 @@ func (s *stubAdminService) ForceAntigravityPrivacy(ctx context.Context, account 
 
 func (s *stubAdminService) ReplaceUserGroup(ctx context.Context, userID, oldGroupID, newGroupID int64) (*service.ReplaceUserGroupResult, error) {
 	return &service.ReplaceUserGroupResult{MigratedKeys: 0}, nil
+}
+
+func (s *stubAdminService) CreateTimedUserGrant(ctx context.Context, userID int64, input service.CreateTimedUserGrantInput) (*service.TimedUserGrant, error) {
+	return &service.TimedUserGrant{UserID: userID, GrantType: input.GrantType, Amount: input.Amount, DurationSeconds: input.DurationSeconds, Status: service.TimedGrantStatusPending}, nil
+}
+
+func (s *stubAdminService) ListTimedUserGrants(ctx context.Context, userID int64) ([]service.TimedUserGrant, error) {
+	return nil, nil
 }
 
 // Ensure stub implements interface.

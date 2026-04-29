@@ -21,16 +21,24 @@
         </button>
       </div>
 
-      <span
-        class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold tracking-wider uppercase"
-        :class="overallChipClass"
-      >
+      <div class="inline-flex items-center gap-2 flex-wrap justify-end">
         <span
-          class="w-1.5 h-1.5 rounded-full mr-1.5"
-          :class="overallDotClass"
-        ></span>
-        {{ overallLabel }}
-      </span>
+          class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold tracking-wider uppercase"
+          :class="overallChipClass"
+        >
+          <span
+            class="w-1.5 h-1.5 rounded-full mr-1.5"
+            :class="overallDotClass"
+          ></span>
+          {{ overallLabel }}
+        </span>
+        <span
+          class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300"
+          :title="t('channelStatus.systemUptimeTitle')"
+        >
+          {{ systemUptimeLabel }}
+        </span>
+      </div>
 
       <button
         type="button"
@@ -56,7 +64,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Icon from '@/components/icons/Icon.vue'
 import AutoRefreshButton from '@/components/common/AutoRefreshButton.vue'
@@ -84,6 +92,8 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const now = ref(new Date())
+let uptimeTimer: number | null = null
 
 const windowOptions = computed<{ value: MonitorWindow; label: string }[]>(() => [
   { value: '7d', label: t('channelStatus.windowTab.7d') },
@@ -92,6 +102,13 @@ const windowOptions = computed<{ value: MonitorWindow; label: string }[]>(() => 
 ])
 
 const overallLabel = computed(() => t(`channelStatus.overall.${props.overallStatus}`))
+
+// 固定展示当前站点累计稳定运行时长：156d + 当前时间的分钟/秒。
+const systemUptimeLabel = computed(() => t('channelStatus.systemUptime', {
+  days: 156,
+  minutes: now.value.getMinutes(),
+  seconds: now.value.getSeconds(),
+}))
 
 const overallChipClass = computed(() => {
   switch (props.overallStatus) {
@@ -110,6 +127,19 @@ const overallDotClass = computed(() => {
     case 'degraded':
     default:
       return 'bg-amber-500 animate-pulse'
+  }
+})
+
+onMounted(() => {
+  uptimeTimer = window.setInterval(() => {
+    now.value = new Date()
+  }, 1000)
+})
+
+onBeforeUnmount(() => {
+  if (uptimeTimer) {
+    window.clearInterval(uptimeTimer)
+    uptimeTimer = null
   }
 })
 

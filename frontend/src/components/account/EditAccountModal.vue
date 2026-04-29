@@ -1102,6 +1102,43 @@
         </div>
       </div>
 
+      <!-- OpenAI API Key 自定义出站协议：默认关闭，保持 Sub2API 原逻辑 -->
+      <div
+        v-if="account?.platform === 'openai' && account?.type === 'apikey'"
+        class="border-t border-gray-200 pt-4 dark:border-dark-600"
+      >
+        <div class="flex items-center justify-between gap-4">
+          <div>
+            <label class="input-label mb-0">{{ t('admin.accounts.openai.customOutboundProtocol') }}</label>
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              {{ t('admin.accounts.openai.customOutboundProtocolDesc') }}
+            </p>
+          </div>
+          <button
+            type="button"
+            @click="customOpenAIOutboundEnabled = !customOpenAIOutboundEnabled"
+            :class="[
+              'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
+              customOpenAIOutboundEnabled ? 'bg-primary-600' : 'bg-gray-200 dark:bg-dark-600'
+            ]"
+          >
+            <span
+              :class="[
+                'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                customOpenAIOutboundEnabled ? 'translate-x-5' : 'translate-x-0'
+              ]"
+            />
+          </button>
+        </div>
+        <div v-if="customOpenAIOutboundEnabled" class="mt-3">
+          <label class="input-label">{{ t('admin.accounts.openai.outboundProtocol') }}</label>
+          <select v-model="openAIOutboundProtocol" class="input">
+            <option value="responses">{{ t('admin.accounts.openai.outboundProtocolResponses') }}</option>
+            <option value="chat_completions">{{ t('admin.accounts.openai.outboundProtocolChatCompletions') }}</option>
+          </select>
+        </div>
+      </div>
+
       <!-- OpenAI WS Mode 三态（off/ctx_pool/passthrough） -->
       <div
         v-if="account?.platform === 'openai' && (account?.type === 'oauth' || account?.type === 'apikey')"
@@ -1204,6 +1241,8 @@
           :quotaNotifyTotalEnabled="quotaNotifyState.total.enabled"
           :quotaNotifyTotalThreshold="quotaNotifyState.total.threshold"
           :quotaNotifyTotalThresholdType="quotaNotifyState.total.thresholdType"
+          :codex5hStopRemainingPercent="editCodex5hStopRemainingPercent"
+          :codex7dStopRemainingPercent="editCodex7dStopRemainingPercent"
           @update:totalLimit="editQuotaLimit = $event"
           @update:dailyLimit="editQuotaDailyLimit = $event"
           @update:weeklyLimit="editQuotaWeeklyLimit = $event"
@@ -1222,11 +1261,13 @@
           @update:quotaNotifyTotalEnabled="quotaNotifyState.total.enabled = $event"
           @update:quotaNotifyTotalThreshold="quotaNotifyState.total.threshold = $event"
           @update:quotaNotifyTotalThresholdType="quotaNotifyState.total.thresholdType = $event"
+          @update:codex5hStopRemainingPercent="editCodex5hStopRemainingPercent = $event"
+          @update:codex7dStopRemainingPercent="editCodex7dStopRemainingPercent = $event"
         />
       </div>
-      <!-- 配额控制 (非 Anthropic apikey/bedrock) -->
+      <!-- 配额控制 (非 Anthropic apikey/bedrock；OpenAI OAuth 也需要 Codex 5h/周额度停调度阈值) -->
       <div
-        v-else-if="account?.type === 'apikey' || account?.type === 'bedrock'"
+        v-else-if="account?.type === 'apikey' || account?.type === 'bedrock' || (account?.platform === 'openai' && account?.type === 'oauth')"
         class="border-t border-gray-200 pt-4 dark:border-dark-600 space-y-4"
       >
         <div class="mb-3">
@@ -1255,6 +1296,8 @@
           :quotaNotifyTotalEnabled="quotaNotifyState.total.enabled"
           :quotaNotifyTotalThreshold="quotaNotifyState.total.threshold"
           :quotaNotifyTotalThresholdType="quotaNotifyState.total.thresholdType"
+          :codex5hStopRemainingPercent="editCodex5hStopRemainingPercent"
+          :codex7dStopRemainingPercent="editCodex7dStopRemainingPercent"
           @update:totalLimit="editQuotaLimit = $event"
           @update:dailyLimit="editQuotaDailyLimit = $event"
           @update:weeklyLimit="editQuotaWeeklyLimit = $event"
@@ -1273,6 +1316,8 @@
           @update:quotaNotifyTotalEnabled="quotaNotifyState.total.enabled = $event"
           @update:quotaNotifyTotalThreshold="quotaNotifyState.total.threshold = $event"
           @update:quotaNotifyTotalThresholdType="quotaNotifyState.total.thresholdType = $event"
+          @update:codex5hStopRemainingPercent="editCodex5hStopRemainingPercent = $event"
+          @update:codex7dStopRemainingPercent="editCodex7dStopRemainingPercent = $event"
         />
       </div>
 
@@ -2052,6 +2097,8 @@ const customBaseUrl = ref('')
 
 // OpenAI 自动透传开关（OAuth/API Key）
 const openaiPassthroughEnabled = ref(false)
+const customOpenAIOutboundEnabled = ref(false)
+const openAIOutboundProtocol = ref<'responses' | 'chat_completions'>('responses')
 const openAICompactMode = ref<OpenAICompactMode>('auto')
 const openaiOAuthResponsesWebSocketV2Mode = ref<OpenAIWSMode>(OPENAI_WS_MODE_OFF)
 const openaiAPIKeyResponsesWebSocketV2Mode = ref<OpenAIWSMode>(OPENAI_WS_MODE_OFF)
@@ -2077,6 +2124,8 @@ loadQuotaNotifyGlobal()
 const editQuotaLimit = ref<number | null>(null)
 const editQuotaDailyLimit = ref<number | null>(null)
 const editQuotaWeeklyLimit = ref<number | null>(null)
+const editCodex5hStopRemainingPercent = ref<number | null>(null)
+const editCodex7dStopRemainingPercent = ref<number | null>(null)
 const editDailyResetMode = ref<'rolling' | 'fixed' | null>(null)
 const editDailyResetHour = ref<number | null>(null)
 const editWeeklyResetMode = ref<'rolling' | 'fixed' | null>(null)
@@ -2111,9 +2160,8 @@ const openAICompactModeOptions = computed(() => [
   { value: 'force_on', label: t('admin.accounts.openai.compactModeForceOn') },
   { value: 'force_off', label: t('admin.accounts.openai.compactModeForceOff') }
 ])
-const isOpenAIModelRestrictionDisabled = computed(() =>
-  props.account?.platform === 'openai' && openaiPassthroughEnabled.value
-)
+// OpenAI 透传不再禁用模型白名单/映射配置：管理员需要在透传开启时继续维护对外模型名。
+const isOpenAIModelRestrictionDisabled = computed(() => false)
 const openAICompactStatusKey = computed(() => {
   const extra = props.account?.extra as Record<string, unknown> | undefined
   if (!props.account || props.account.platform !== 'openai') return ''
@@ -2256,6 +2304,8 @@ const syncFormFromAccount = (newAccount: Account | null) => {
 
   // Load OpenAI passthrough toggle (OpenAI OAuth/API Key)
   openaiPassthroughEnabled.value = false
+  customOpenAIOutboundEnabled.value = false
+  openAIOutboundProtocol.value = 'responses'
   openAICompactMode.value = 'auto'
   openAICompactModelMappings.value = []
   openaiOAuthResponsesWebSocketV2Mode.value = OPENAI_WS_MODE_OFF
@@ -2265,6 +2315,8 @@ const syncFormFromAccount = (newAccount: Account | null) => {
   webSearchEmulationMode.value = 'default'
   if (newAccount.platform === 'openai' && (newAccount.type === 'oauth' || newAccount.type === 'apikey')) {
     openaiPassthroughEnabled.value = extra?.openai_passthrough === true || extra?.openai_oauth_passthrough === true
+    customOpenAIOutboundEnabled.value = extra?.custom_openai_outbound_enabled === true
+    openAIOutboundProtocol.value = extra?.openai_outbound_protocol === 'chat_completions' ? 'chat_completions' : 'responses'
     openAICompactMode.value = (extra?.openai_compact_mode as OpenAICompactMode) || 'auto'
     openaiOAuthResponsesWebSocketV2Mode.value = resolveOpenAIWSModeFromExtra(extra, {
       modeKey: 'openai_oauth_responses_websockets_v2_mode',
@@ -2308,6 +2360,10 @@ const syncFormFromAccount = (newAccount: Account | null) => {
     editQuotaDailyLimit.value = (dailyVal && dailyVal > 0) ? dailyVal : null
     const weeklyVal = extra?.quota_weekly_limit as number | undefined
     editQuotaWeeklyLimit.value = (weeklyVal && weeklyVal > 0) ? weeklyVal : null
+    const codex5hStopRemainingVal = extra?.codex_5h_stop_remaining_percent as number | undefined
+    editCodex5hStopRemainingPercent.value = (typeof codex5hStopRemainingVal === 'number' && codex5hStopRemainingVal > 0) ? codex5hStopRemainingVal : null
+    const codex7dStopRemainingVal = extra?.codex_7d_stop_remaining_percent as number | undefined
+    editCodex7dStopRemainingPercent.value = (typeof codex7dStopRemainingVal === 'number' && codex7dStopRemainingVal > 0) ? codex7dStopRemainingVal : null
     // Load quota reset mode config
     editDailyResetMode.value = (extra?.quota_daily_reset_mode as 'rolling' | 'fixed') || null
     editDailyResetHour.value = (extra?.quota_daily_reset_hour as number) ?? null
@@ -2321,6 +2377,8 @@ const syncFormFromAccount = (newAccount: Account | null) => {
     editQuotaLimit.value = null
     editQuotaDailyLimit.value = null
     editQuotaWeeklyLimit.value = null
+    editCodex5hStopRemainingPercent.value = null
+    editCodex7dStopRemainingPercent.value = null
     editDailyResetMode.value = null
     editDailyResetHour.value = null
     editWeeklyResetMode.value = null
@@ -2975,7 +3033,7 @@ const handleSubmit = async () => {
     if (props.account.type === 'apikey') {
       const currentCredentials = (props.account.credentials as Record<string, unknown>) || {}
       const newBaseUrl = editBaseUrl.value.trim() || defaultBaseUrl.value
-      const shouldApplyModelMapping = !(props.account.platform === 'openai' && openaiPassthroughEnabled.value)
+      const shouldApplyModelMapping = true
 
       // Always update credentials for apikey type to handle model mapping changes
       const newCredentials: Record<string, unknown> = {
@@ -2995,7 +3053,7 @@ const handleSubmit = async () => {
         return
       }
 
-      // Add model mapping if configured（OpenAI 开启自动透传时保留现有映射，不再编辑）
+      // Add model mapping if configured（OpenAI 透传开启时也允许管理员编辑对外模型）
       if (shouldApplyModelMapping) {
         const modelMapping = buildModelMappingObject(modelRestrictionMode.value, allowedModels.value, modelMappings.value)
         if (modelMapping) {
@@ -3126,7 +3184,7 @@ const handleSubmit = async () => {
       const currentCredentials = (updatePayload.credentials as Record<string, unknown>) ||
         ((props.account.credentials as Record<string, unknown>) || {})
       const newCredentials: Record<string, unknown> = { ...currentCredentials }
-      const shouldApplyModelMapping = !openaiPassthroughEnabled.value
+      const shouldApplyModelMapping = true
 
       if (shouldApplyModelMapping) {
         const modelMapping = buildModelMappingObject(modelRestrictionMode.value, allowedModels.value, modelMappings.value)
@@ -3136,7 +3194,6 @@ const handleSubmit = async () => {
           delete newCredentials.model_mapping
         }
       } else if (currentCredentials.model_mapping) {
-        // 透传模式保留现有映射
         newCredentials.model_mapping = currentCredentials.model_mapping
       }
       const compactModelMapping = buildModelMappingObject('mapping', [], openAICompactModelMappings.value)
@@ -3297,9 +3354,10 @@ const handleSubmit = async () => {
       updatePayload.extra = newExtra
     }
 
-    // For OpenAI OAuth/API Key accounts, handle passthrough mode in extra
+    // For OpenAI OAuth/API Key accounts, handle passthrough mode and Codex quota thresholds in extra
     if (props.account.platform === 'openai' && (props.account.type === 'oauth' || props.account.type === 'apikey')) {
-      const currentExtra = (props.account.extra as Record<string, unknown>) || {}
+      const currentExtra = (updatePayload.extra as Record<string, unknown>) ||
+        (props.account.extra as Record<string, unknown>) || {}
       const newExtra: Record<string, unknown> = { ...currentExtra }
       const hadCodexCLIOnlyEnabled = currentExtra.codex_cli_only === true
       if (props.account.type === 'oauth') {
@@ -3317,6 +3375,13 @@ const handleSubmit = async () => {
         delete newExtra.openai_passthrough
         delete newExtra.openai_oauth_passthrough
       }
+      if (props.account.type === 'apikey' && customOpenAIOutboundEnabled.value) {
+        newExtra.custom_openai_outbound_enabled = true
+        newExtra.openai_outbound_protocol = openAIOutboundProtocol.value
+      } else {
+        delete newExtra.custom_openai_outbound_enabled
+        delete newExtra.openai_outbound_protocol
+      }
       if (openAICompactMode.value === 'auto') {
         delete newExtra.openai_compact_mode
       } else {
@@ -3332,6 +3397,18 @@ const handleSubmit = async () => {
         } else {
           delete newExtra.codex_cli_only
         }
+      }
+
+      // OpenAI/Codex remaining-percent auto-stop thresholds. Empty/0 keeps old behavior.
+      if (editCodex5hStopRemainingPercent.value != null && editCodex5hStopRemainingPercent.value > 0) {
+        newExtra.codex_5h_stop_remaining_percent = Math.min(100, editCodex5hStopRemainingPercent.value)
+      } else {
+        delete newExtra.codex_5h_stop_remaining_percent
+      }
+      if (editCodex7dStopRemainingPercent.value != null && editCodex7dStopRemainingPercent.value > 0) {
+        newExtra.codex_7d_stop_remaining_percent = Math.min(100, editCodex7dStopRemainingPercent.value)
+      } else {
+        delete newExtra.codex_7d_stop_remaining_percent
       }
 
       updatePayload.extra = newExtra
@@ -3363,6 +3440,17 @@ const handleSubmit = async () => {
         delete newExtra.quota_weekly_limit
         delete newExtra.quota_weekly_used
         delete newExtra.quota_weekly_start
+      }
+      // OpenAI/Codex remaining-percent auto-stop thresholds. Empty/0 keeps old behavior.
+      if (editCodex5hStopRemainingPercent.value != null && editCodex5hStopRemainingPercent.value > 0) {
+        newExtra.codex_5h_stop_remaining_percent = Math.min(100, editCodex5hStopRemainingPercent.value)
+      } else {
+        delete newExtra.codex_5h_stop_remaining_percent
+      }
+      if (editCodex7dStopRemainingPercent.value != null && editCodex7dStopRemainingPercent.value > 0) {
+        newExtra.codex_7d_stop_remaining_percent = Math.min(100, editCodex7dStopRemainingPercent.value)
+      } else {
+        delete newExtra.codex_7d_stop_remaining_percent
       }
       // Quota reset mode config
       if (editDailyResetMode.value === 'fixed') {
